@@ -4,29 +4,42 @@ import torch.nn.functional as F
 
 # Target Model definition
 class MNIST_target_net(nn.Module):
-    def __init__(self):
+    def __init__(self, classes=10, label_size=5):
         super(MNIST_target_net, self).__init__()
-        self.conv1 = nn.Conv2d(1, 32, kernel_size=3)
+        self.classes = classes
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=3) # HUH? what are channels
         self.conv2 = nn.Conv2d(32, 32, kernel_size=3)
         self.conv3 = nn.Conv2d(32, 64, kernel_size=3)
         self.conv4 = nn.Conv2d(64, 64, kernel_size=3)
 
-        self.fc1 = nn.Linear(64*4*4, 200)
+        self.fc1 = nn.Linear(64 * 15 * 47, 200)
         self.fc2 = nn.Linear(200, 200)
-        self.logits = nn.Linear(200, 10)
+        self.logits = nn.Linear(200, classes * label_size)
 
     def forward(self, x):
+        # print("x shape 1: {}".format(x.shape))
         x = F.relu(self.conv1(x))
+        # print("x shape 2: {}".format(x.shape))
         x = F.relu(self.conv2(x))
+        # print("x shape 3: {}".format(x.shape))
         x = F.max_pool2d(x, 2)
+        # print("x shape 4: {}".format(x.shape))
         x = F.relu(self.conv3(x))
+        # print("x shape 5: {}".format(x.shape))
         x = F.relu(self.conv4(x))
+        # print("x shape 6: {}".format(x.shape))
         x = F.max_pool2d(x, 2)
-        x = x.view(-1, 64*4*4)
+        # print("x shape 7: {}".format(x.shape))
+        x = x.view(-1, 64*15*47)
+        # print("x shape 8: {}".format(x.shape))
         x = F.relu(self.fc1(x))
+        # print("x shape 9: {}".format(x.shape))
         x = F.dropout(x, 0.5)
+        # print("x shape 10: {}".format(x.shape))
         x = F.relu(self.fc2(x))
+        # print("x shape 11: {}".format(x.shape))
         x = self.logits(x)
+        # print("x shape 12: {}".format(x.shape))
         return x
 
 
