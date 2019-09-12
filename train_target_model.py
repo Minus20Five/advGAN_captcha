@@ -37,17 +37,23 @@ class CaptchaDataset(Dataset):
 if __name__ == "__main__":
     use_cuda = True
     image_nc = 1
-    batch_size = 256
+    batch_size = 32
 
     # # Define what device we are using
     print("CUDA Available: ", torch.cuda.is_available())
-    device = torch.device("cuda" if (use_cuda and torch.cuda.is_available()) else "cpu")
+
+    if (use_cuda and torch.cuda.is_available()) :
+        torch.set_default_tensor_type(torch.cuda.FloatTensor)
+        device = "cuda:0"
+    else:
+        device = "cpu"
 
     captcha_dataset = CaptchaDataset(os.path.join(FILE_DIR, "data", "train"))
     train_dataloader = DataLoader(captcha_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
 
     # training the target model
-    target_model = MNIST_target_net(classes=len(LABEL_SEQ_VALUE), label_size=LABEL_SEQ_LENGTH).to(device)
+    target_model = MNIST_target_net(classes=len(LABEL_SEQ_VALUE), label_size=LABEL_SEQ_LENGTH)
+    target_model = target_model.to(device)
     target_model.train()
     opt_model = torch.optim.Adam(target_model.parameters(), lr=0.001)
     epochs = 20
@@ -57,7 +63,8 @@ if __name__ == "__main__":
             opt_model = torch.optim.Adam(target_model.parameters(), lr=0.0001)
         for char_sec, data in enumerate(train_dataloader, 0):
             train_imgs, train_labels = data
-            train_imgs, train_labels = train_imgs.to(device), train_labels.to(device)
+            train_imgs = train_imgs.to(device)
+            train_labels =  train_labels.to(device)
             logits_list = target_model(train_imgs)
             loss_model = 0
             for char_idx, logit in enumerate(logits_list):
