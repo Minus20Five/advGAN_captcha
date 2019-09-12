@@ -6,17 +6,15 @@ import torch.nn.functional as F
 class MNIST_target_net(nn.Module):
     def __init__(self, classes=36, label_size=5):
         super(MNIST_target_net, self).__init__()
-        self.classes = classes
+        self.label_size = label_size
         self.conv1 = nn.Conv2d(1, 32, kernel_size=3)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3)
-        self.conv3 = nn.Conv2d(64, 128, kernel_size=3)
-        self.conv4 = nn.Conv2d(128, 128, kernel_size=3)
+        self.conv3 = nn.Conv2d(64, 64, kernel_size=3)
+        self.conv4 = nn.Conv2d(64, 64, kernel_size=3)
 
-        self.fc1 = nn.Linear(128 * 15 * 47, 128)
-        self.fc2 = nn.Linear(128, 128)
-        self.logits = []
-        for i in range(label_size):
-            self.logits.append(nn.Linear(128, classes))
+        self.fc1 = nn.Linear(64 * 15 * 47, 200)
+        self.fc2 = nn.ModuleList([nn.Linear(200, 200) for _ in range(label_size)])
+        self.logits = nn.ModuleList([nn.Linear(200, classes) for _ in range(label_size)])
 
     def forward(self, x):
         # print("x shape 1: {}".format(x.shape))
@@ -33,17 +31,19 @@ class MNIST_target_net(nn.Module):
         # print("x shape 6: {}".format(x.shape))
         x = F.max_pool2d(x, 2)
         # print("x shape 7: {}".format(x.shape))
-        x = x.view(-1, 128*15*47)
+        x = x.view(-1, 64*15*47)
         # print("x shape 8: {}".format(x.shape))
         x = F.relu(self.fc1(x))
         # print("x shape 9: {}".format(x.shape))
         x = F.dropout(x, 0.5)
         # print("x shape 10: {}".format(x.shape))
-        x = F.relu(self.fc2(x))
+        # x = F.relu(self.fc2(x))
         # print("x shape 11: {}".format(x.shape))
         logits = []
-        for linear in self.logits:
-            logits.append(linear(x))
+        for idx in range(self.label_size):
+            x2 = F.relu(self.fc2[idx](x))
+            x2 = self.logits[idx](x2)
+            logits.append(x2)
         return logits
 
 
