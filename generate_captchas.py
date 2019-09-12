@@ -5,10 +5,10 @@ import string
 from multiprocessing import Process
 
 NUM_THREADS = 4  # number of threads to use in parallel captcha generation
-TRAIN_SIZE = 1000  # size of training set
-TEST_SIZE = 100  # size of test set
+TRAIN_SIZE = 10000  # size of training set
+TEST_SIZE = 1000  # size of test set
 LABEL_SEQ_LENGTH = 5  # number of characters in captcha
-LABEL_SEQ_VALUE = string.ascii_lowercase + string.digits  # possible values of characters in captcha label
+LABEL_SEQ_VALUE = string.digits + string.ascii_lowercase  # possible values of characters in captcha label
 
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 DEFAULT_FONTS = [os.path.join(FILE_DIR, "font", "DroidSansMono.ttf")]

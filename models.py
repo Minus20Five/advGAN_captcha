@@ -4,17 +4,19 @@ import torch.nn.functional as F
 
 # Target Model definition
 class MNIST_target_net(nn.Module):
-    def __init__(self, classes=10, label_size=5):
+    def __init__(self, classes=36, label_size=5):
         super(MNIST_target_net, self).__init__()
         self.classes = classes
-        self.conv1 = nn.Conv2d(1, 32, kernel_size=3) # HUH? what are channels
-        self.conv2 = nn.Conv2d(32, 32, kernel_size=3)
-        self.conv3 = nn.Conv2d(32, 64, kernel_size=3)
-        self.conv4 = nn.Conv2d(64, 64, kernel_size=3)
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=3)
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3)
+        self.conv3 = nn.Conv2d(64, 128, kernel_size=3)
+        self.conv4 = nn.Conv2d(128, 128, kernel_size=3)
 
-        self.fc1 = nn.Linear(64 * 15 * 47, 200)
-        self.fc2 = nn.Linear(200, 200)
-        self.logits = nn.Linear(200, classes * label_size)
+        self.fc1 = nn.Linear(128 * 15 * 47, 128)
+        self.fc2 = nn.Linear(128, 128)
+        self.logits = []
+        for i in range(label_size):
+            self.logits.append(nn.Linear(128, classes))
 
     def forward(self, x):
         # print("x shape 1: {}".format(x.shape))
@@ -25,12 +27,13 @@ class MNIST_target_net(nn.Module):
         x = F.max_pool2d(x, 2)
         # print("x shape 4: {}".format(x.shape))
         x = F.relu(self.conv3(x))
+        # print("x shape 4: {}".format(x.shape))
         # print("x shape 5: {}".format(x.shape))
         x = F.relu(self.conv4(x))
         # print("x shape 6: {}".format(x.shape))
         x = F.max_pool2d(x, 2)
         # print("x shape 7: {}".format(x.shape))
-        x = x.view(-1, 64*15*47)
+        x = x.view(-1, 128*15*47)
         # print("x shape 8: {}".format(x.shape))
         x = F.relu(self.fc1(x))
         # print("x shape 9: {}".format(x.shape))
@@ -38,9 +41,10 @@ class MNIST_target_net(nn.Module):
         # print("x shape 10: {}".format(x.shape))
         x = F.relu(self.fc2(x))
         # print("x shape 11: {}".format(x.shape))
-        x = self.logits(x)
-        # print("x shape 12: {}".format(x.shape))
-        return x
+        logits = []
+        for linear in self.logits:
+            logits.append(linear(x))
+        return logits
 
 
 class Discriminator(nn.Module):
