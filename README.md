@@ -1,26 +1,12 @@
-# advGAN_pytorch
-a Pytorch implementation of the paper "Generating Adversarial Examples with Adversarial Networks" (advGAN).
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Minus20Five/advGAN_captcha/blob/master/google-colab-env.ipynb)
 
-## training the target model
+# advGAN_captcha
+Pytorch project which aims to generate adversarial noise to attack CAPTCHA solvers.
 
-```shell
-python3 train_target_model.py
-```
+Adversarial GAN (advGAN) implementation is from the paper "Generating Adversarial Examples with Adversarial Networks"
 
-## training the advGAN
+## Setup
+Setup workspace in [Google Colab](https://colab.research.google.com/github/Minus20Five/advGAN_captcha/blob/master/google-colab-env.ipynb) (except Henry)
 
-```shell
-python3 main.py
-```
+[My dataset and pre-trained models](https://drive.google.com/open?id=1GjPE_Z6c_tJrsWAmyItG-5WPzy-MKkBT)
 
-## testing adversarial examples
-
-```shell
-python3 test_adversarial_examples.py
-```
-
-## results
-
-**attack success rate** in the MNIST test set: **99%**
-
-**NOTE:** My implementation is a little different from the paper, because I add a clipping trick.
