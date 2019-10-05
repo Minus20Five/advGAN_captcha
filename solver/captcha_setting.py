@@ -13,6 +13,8 @@ MAX_CAPTCHA = 4
 IMAGE_HEIGHT = 60
 IMAGE_WIDTH = 160
 
-TRAIN_DATASET_PATH = 'dataset' + os.path.sep + 'train'
-TEST_DATASET_PATH = 'dataset' + os.path.sep + 'test'
-PREDICT_DATASET_PATH = 'dataset' + os.path.sep + 'predict'
+TRAIN_DATASET_PATH = 'data' + os.path.sep + 'train'
+TEST_DATASET_PATH = 'data' + os.path.sep + 'test'
+PREDICT_DATASET_PATH = 'data' + os.path.sep + 'predict'
+
+MODEL_SAVE_PATH = "./model.pkl"

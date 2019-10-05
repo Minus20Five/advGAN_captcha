@@ -2,7 +2,7 @@
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
-from solver import my_dataset
+from solver import my_dataset, captcha_setting
 from solver.captcha_cnn_model import CNN
 
 # Hyper Parameters
@@ -44,11 +44,10 @@ def main():
             optimizer.step()
             if (i+1) % 10 == 0:
                 print("epoch:", epoch, "step:", i, "loss:", loss.item())
-            if (i+1) % 100 == 0:
-                torch.save(cnn.state_dict(), "./model.pkl")   #current is model.pkl
-                print("save model")
+        torch.save(cnn.state_dict(), captcha_setting.MODEL_SAVE_PATH)   #current is model.pkl
         print("epoch:", epoch, "step:", i, "loss:", loss.item())
-    torch.save(cnn.state_dict(), "./model.pkl")   #current is model.pkl
+
+    torch.save(cnn.state_dict(), captcha_setting.MODEL_SAVE_PATH)   #current is model.pkl
     print("save last model")
 
 if __name__ == '__main__':
