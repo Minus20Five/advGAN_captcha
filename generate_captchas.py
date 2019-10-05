@@ -5,19 +5,19 @@ import string
 from multiprocessing import Process
 
 NUM_THREADS = 4  # number of threads to use in parallel captcha generation
-TRAIN_SIZE = 10000  # size of training set
-TEST_SIZE = 1000  # size of test set
-LABEL_SEQ_LENGTH = 5  # number of characters in captcha
-LABEL_SEQ_VALUE = string.digits + string.ascii_lowercase  # possible values of characters in captcha label
+TRAIN_SIZE = 80000  # size of training set
+TEST_SIZE = 10000  # size of test set
+LABEL_SEQ_LENGTH = 4  # number of characters in captcha
+LABEL_SEQ_VALUE = string.digits + string.ascii_uppercase
 
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
-DEFAULT_FONTS = [os.path.join(FILE_DIR, "font", "DroidSansMono.ttf")]
+DEFAULT_FONTS = [os.path.join(FILE_DIR, "font", "Consolas.ttf")]
 
 
 class WheezyCaptcha:
     """Create an image CAPTCHA with wheezy.captcha."""
 
-    def __init__(self, width=200, height=75, fonts=None):
+    def __init__(self, width=160, height=60, fonts=None):
         self._width = width
         self._height = height
         self._fonts = fonts or DEFAULT_FONTS
@@ -30,10 +30,10 @@ class WheezyCaptcha:
         ]
         fn = wheezy_captcha.captcha(
             drawings=[
-                wheezy_captcha.background(color="#000000"),
-                wheezy_captcha.text(fonts=self._fonts, drawings=text_drawings, color="#ffffff"),
-                wheezy_captcha.curve(number=5, color="#7f7f7f"),
-                wheezy_captcha.noise(color="#7f7f7f"),
+                wheezy_captcha.background(color="#ffffff"),
+                wheezy_captcha.text(fonts=self._fonts, drawings=text_drawings),
+                # wheezy_captcha.curve(number=5),
+                # wheezy_captcha.noise(color="#dddddd"),
                 wheezy_captcha.smooth(),
             ],
             width=self._width,
