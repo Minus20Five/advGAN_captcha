@@ -44,7 +44,8 @@ def main():
             optimizer.step()
             if (i+1) % 10 == 0:
                 print("epoch:", epoch, "step:", i, "loss:", loss.item())
-        torch.save(cnn.state_dict(), captcha_setting.MODEL_SAVE_PATH)   #current is model.pkl
+        torch.save(cnn.state_dict(), captcha_setting.MODEL_SAVE_PATH + ".epoch" + str(epoch))   #current is model.pkl
+        print("saved model")
         print("epoch:", epoch, "step:", i, "loss:", loss.item())
 
     torch.save(cnn.state_dict(), captcha_setting.MODEL_SAVE_PATH)   #current is model.pkl
