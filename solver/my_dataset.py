@@ -4,7 +4,7 @@ import os
 import torchvision.transforms as transforms
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset
-from solver import captcha_setting
+from solver import captcha_setting, one_hot_encoding as ohe
 
 
 class mydataset(Dataset):
