@@ -7,3 +7,4 @@ venv/
 dataset/
 models/
 *.pth
+*.pkl
