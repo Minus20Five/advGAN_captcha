@@ -4,6 +4,8 @@ import torch.nn.functional as F
 import os
 
 from advgan import models
+from solver import captcha_setting
+from utils.utils import mkdir_p
 
 models_path = './models/'
 
@@ -49,8 +51,19 @@ class AdvGAN_Attack:
         self.optimizer_D = torch.optim.Adam(self.netDisc.parameters(),
                                             lr=0.001)
 
+        self.dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), captcha_setting.MODEL_PATH)
+        mkdir_p(self.dir)
+
         if not os.path.exists(models_path):
             os.makedirs(models_path)
+
+    def load_models(self):
+        self.netG.load_state_dict(os.path.join(self.dir, captcha_setting.GENERATOR_FILE_NAME), map_location=self.device)
+        self.netDisc.load_state_dict(os.path.join(self.dir, captcha_setting.DISCRIMINATOR_FILE_NAME), map_location=self.device)
+
+    def save_models(self):
+        torch.save(self.netDisc.state_dict(), os.path.join(self.dir, captcha_setting.GENERATOR_FILE_NAME))
+        torch.save(self.netG.state_dict(), os.path.join(self.dir, captcha_setting.DISCRIMINATOR_FILE_NAME))
 
     def train_batch(self, x, labels):
         # optimize D
@@ -88,15 +101,16 @@ class AdvGAN_Attack:
 
             # cal adv loss
             logits_model = self.model(adv_images)
-            probs_model = F.softmax(logits_model, dim=1)
-            onehot_labels = torch.eye(self.model_num_labels, device=self.device)[labels]
+            loss_adv = -F.multilabel_soft_margin_loss(logits_model, labels.float())
+            # probs_model = F.softmax(logits_model, dim=1)
+            # onehot_labels = torch.eye(self.model_num_labels, device=self.device)[labels]
 
             # C&W loss function
-            real = torch.sum(onehot_labels * probs_model, dim=1)
-            other, _ = torch.max((1 - onehot_labels) * probs_model - onehot_labels * 10000, dim=1)
-            zeros = torch.zeros_like(other)
-            loss_adv = torch.max(real - other, zeros)
-            loss_adv = torch.sum(loss_adv)
+            # real = torch.sum(onehot_labels * probs_model, dim=1)
+            # other, _ = torch.max((1 - onehot_labels) * probs_model - onehot_labels * 10000, dim=1)
+            # zeros = torch.zeros_like(other)
+            # loss_adv = torch.max(real - other, zeros)
+            # loss_adv = torch.sum(loss_adv)
 
             # maximize cross_entropy loss
             # loss_adv = -F.mse_loss(logits_model, onehot_labels)

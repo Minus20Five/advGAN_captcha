@@ -17,4 +17,8 @@ TRAIN_DATASET_PATH = 'data' + os.path.sep + 'train'
 TEST_DATASET_PATH = 'data' + os.path.sep + 'test'
 PREDICT_DATASET_PATH = 'data' + os.path.sep + 'predict'
 
+MODEL_PATH = "model"
+
+GENERATOR_FILE_NAME = "generator.pkl"
+DISCRIMINATOR_FILE_NAME = "discriminator.pkl"
 MODEL_SAVE_PATH = "./model.pkl"
