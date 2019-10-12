@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch
-from advgan import models
+import advgan.models
 import torch.nn.functional as F
 import os
 

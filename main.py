@@ -4,7 +4,6 @@ import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 from advgan.advGAN import AdvGAN_Attack
 from solver.captcha_cnn_model import CNN
-from solver import captcha_setting
 
 # from advgan.models import MNIST_target_net
 
