@@ -2,8 +2,8 @@ import torch
 import torchvision.datasets
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
-import models
-from models import MNIST_target_net
+from advgan import models
+from advgan.models import MNIST_target_net
 
 use_cuda=True
 image_nc=1

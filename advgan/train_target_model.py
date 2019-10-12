@@ -3,7 +3,7 @@ import torch
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader, Dataset
 import torch.nn.functional as F
-from models import MNIST_target_net
+from advgan.models import MNIST_target_net
 from PIL import Image
 from generate_captchas import LABEL_SEQ_VALUE, LABEL_SEQ_LENGTH
 
