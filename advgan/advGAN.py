@@ -1,8 +1,9 @@
 import torch.nn as nn
 import torch
-import advgan.models
 import torch.nn.functional as F
 import os
+
+from advgan import models
 
 models_path = './models/'
 
