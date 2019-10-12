@@ -23,7 +23,7 @@ def main():
     # pretrained_model = "./MNIST_target_model.pth"
     # targeted_model = MNIST_target_net().to(device)
     targeted_model = CNN().to(device)
-    targeted_model.load_state_dict(torch.load(captcha_setting.MODEL_SAVE_PATH))
+    targeted_model.load_state_dict(torch.load(captcha_setting.MODEL_SAVE_PATH, map_location=device))
     targeted_model.eval()
     # model_num_labels = 10
     model_num_labels = captcha_setting.ALL_CHAR_SET_LEN
