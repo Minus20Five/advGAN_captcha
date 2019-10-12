@@ -6,6 +6,8 @@ from advgan.advGAN import AdvGAN_Attack
 from solver.captcha_cnn_model import CNN
 from solver import captcha_setting
 
+from solver.my_dataset import get_train_data_loader, get_test_data_loader
+
 # from advgan.models import MNIST_target_net
 
 def main():
@@ -29,8 +31,9 @@ def main():
     model_num_labels = captcha_setting.ALL_CHAR_SET_LEN
 
     # MNIST train dataset and dataloader declaration
-    mnist_dataset = torchvision.datasets.MNIST('./dataset', train=True, transform=transforms.ToTensor(), download=True)
-    dataloader = DataLoader(mnist_dataset, batch_size=batch_size, shuffle=True, num_workers=1)
+    # mnist_dataset = torchvision.datasets.MNIST('./dataset', train=True, transform=transforms.ToTensor(), download=True)
+    # dataloader = DataLoader(mnist_dataset, batch_size=batch_size, shuffle=True, num_workers=1)
+    dataloader = get_train_data_loader()
     advGAN = AdvGAN_Attack(device,
                         targeted_model,
                         model_num_labels,

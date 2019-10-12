@@ -88,15 +88,16 @@ class AdvGAN_Attack:
 
             # cal adv loss
             logits_model = self.model(adv_images)
-            probs_model = F.softmax(logits_model, dim=1)
-            onehot_labels = torch.eye(self.model_num_labels, device=self.device)[labels]
+            loss_adv = -F.multilabel_soft_margin_loss(logits_model, labels.float())
+            # probs_model = F.softmax(logits_model, dim=1)
+            # onehot_labels = torch.eye(self.model_num_labels, device=self.device)[labels]
 
             # C&W loss function
-            real = torch.sum(onehot_labels * probs_model, dim=1)
-            other, _ = torch.max((1 - onehot_labels) * probs_model - onehot_labels * 10000, dim=1)
-            zeros = torch.zeros_like(other)
-            loss_adv = torch.max(real - other, zeros)
-            loss_adv = torch.sum(loss_adv)
+            # real = torch.sum(onehot_labels * probs_model, dim=1)
+            # other, _ = torch.max((1 - onehot_labels) * probs_model - onehot_labels * 10000, dim=1)
+            # zeros = torch.zeros_like(other)
+            # loss_adv = torch.max(real - other, zeros)
+            # loss_adv = torch.sum(loss_adv)
 
             # maximize cross_entropy loss
             # loss_adv = -F.mse_loss(logits_model, onehot_labels)
@@ -137,6 +138,10 @@ class AdvGAN_Attack:
                 loss_G_fake_sum += loss_G_fake_batch
                 loss_perturb_sum += loss_perturb_batch
                 loss_adv_sum += loss_adv_batch
+                print("\tstep %d:\n\tloss_D: %.3f, loss_G_fake: %.3f,\
+                    \n\tloss_perturb: %.3f, loss_adv: %.3f, \n" %
+                  (i, loss_D_batch, loss_G_fake_batch,
+                   loss_perturb_batch, loss_adv_batch))
 
             # print statistics
             num_batch = len(train_dataloader)
