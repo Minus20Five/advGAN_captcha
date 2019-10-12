@@ -6,6 +6,8 @@ from advgan.advGAN import AdvGAN_Attack
 from solver.captcha_cnn_model import CNN
 from solver import captcha_setting
 
+from solver.my_dataset import get_train_data_loader, get_test_data_loader
+
 # from advgan.models import MNIST_target_net
 from solver.my_dataset import get_train_data_loader
 
