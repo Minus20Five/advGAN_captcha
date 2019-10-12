@@ -138,11 +138,12 @@ class AdvGAN_Attack:
                 loss_G_fake_sum += loss_G_fake_batch
                 loss_perturb_sum += loss_perturb_batch
                 loss_adv_sum += loss_adv_batch
-                print("\tstep %d:\n\tloss_D: %.3f, loss_G_fake: %.3f,\
-                    \n\tloss_perturb: %.3f, loss_adv: %.3f, \n" %
-                  (i, loss_D_batch, loss_G_fake_batch,
-                   loss_perturb_batch, loss_adv_batch))
 
+                if (i%20 == 0):
+                    print("\tstep %d:\n\tloss_D: %.3f, loss_G_fake: %.3f,\
+                        \n\tloss_perturb: %.3f, loss_adv: %.3f, \n" %
+                    (i, loss_D_batch, loss_G_fake_batch,
+                    loss_perturb_batch, loss_adv_batch))
             # print statistics
             num_batch = len(train_dataloader)
             print("epoch %d:\nloss_D: %.3f, loss_G_fake: %.3f,\
