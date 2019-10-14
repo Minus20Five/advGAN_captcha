@@ -14,6 +14,7 @@ from utils.utils import mkdir_p, training_device
 
 models_path = './models/'
 
+
 # custom weights initialization called on netG and netD
 def weights_init(m):
     classname = m.__class__.__name__
@@ -58,16 +59,19 @@ class AdvGAN_Attack:
         if not os.path.exists(models_path):
             os.makedirs(models_path)
 
-    def load_models(self):
-        self.netG.load_state_dict(torch.load(os.path.join(self.dir, captcha_setting.GENERATOR_FILE_NAME), map_location=self.device))
+    def load_models(self, generator_filename=captcha_setting.GENERATOR_FILE_NAME,
+                    discriminator_filename=captcha_setting.DISCRIMINATOR_FILE_NAME):
+        self.netG.load_state_dict(torch.load(os.path.join(self.dir, generator_filename), map_location=self.device))
         self.netG.to(self.device)
-        self.netDisc.load_state_dict(torch.load(os.path.join(self.dir, captcha_setting.DISCRIMINATOR_FILE_NAME), map_location=self.device))
+        self.netDisc.load_state_dict(
+            torch.load(os.path.join(self.dir, discriminator_filename), map_location=self.device))
         self.netDisc.to(self.device)
         print('Models sucessfully loaded from {}'.format(self.dir))
 
-    def save_models(self):
-        torch.save(self.netDisc.state_dict(), os.path.join(self.dir, captcha_setting.GENERATOR_FILE_NAME))
-        torch.save(self.netG.state_dict(), os.path.join(self.dir, captcha_setting.DISCRIMINATOR_FILE_NAME))
+    def save_models(self, generator_filename=captcha_setting.GENERATOR_FILE_NAME,
+                    discriminator_filename=captcha_setting.DISCRIMINATOR_FILE_NAME):
+        torch.save(self.netDisc.state_dict(), os.path.join(self.dir, generator_filename))
+        torch.save(self.netG.state_dict(), os.path.join(self.dir, discriminator_filename))
         print('Models sucessfully saved at {}'.format(self.dir))
 
     # using pretrained solver and advGAN generator, generate noise for one CATPCHA image,
@@ -86,7 +90,7 @@ class AdvGAN_Attack:
         for i, data in enumerate(test_dataloader, 0):
             times_attacked += 1
             test_images, test_labels = data
-            num_attacked += test_images.shape[0] # the first dimension of data is the batch_size
+            num_attacked += test_images.shape[0]  # the first dimension of data is the batch_size
             perturbations = pretrained_G(test_images)
             perturbations = torch.clamp(perturbations, -0.3, 0.3)
             adv_images = perturbations + test_images
@@ -102,9 +106,12 @@ class AdvGAN_Attack:
                     test_image = test_images[j]
                     perturbation_image = perturbations[j]
                     adv_image = adv_images[j]
-                    save_image(test_image, path.join(captcha_setting.IMAGE_PATH, 'batch-{}-{}-{}.png'.format(i, j, 'original')))
-                    save_image(perturbation_image, path.join(captcha_setting.IMAGE_PATH, 'batch-{}-{}-{}.png'.format(i, j, 'noise')))
-                    save_image(adv_image, path.join(captcha_setting.IMAGE_PATH, 'batch-{}-{}-{}.png'.format(i, j, 'adv')))
+                    save_image(test_image,
+                               path.join(captcha_setting.IMAGE_PATH, 'batch-{}-{}-{}.png'.format(i, j, 'original')))
+                    save_image(perturbation_image,
+                               path.join(captcha_setting.IMAGE_PATH, 'batch-{}-{}-{}.png'.format(i, j, 'noise')))
+                    save_image(adv_image,
+                               path.join(captcha_setting.IMAGE_PATH, 'batch-{}-{}-{}.png'.format(i, j, 'adv')))
 
             if times_attacked >= n:
                 break
