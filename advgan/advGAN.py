@@ -11,6 +11,7 @@ from torchvision.utils import save_image
 from advgan import models
 from solver import captcha_setting, one_hot_encoding
 from solver.captcha_cnn_model import CNN
+from solver.captcha_general import decode_captcha_out
 from solver.my_dataset import get_test_data_loader
 from utils.utils import mkdir_p, training_device
 
@@ -61,9 +62,10 @@ class AdvGAN_Attack:
             os.makedirs(models_path)
 
     def load_models(self):
-        self.netG.load_state_dict(os.path.join(self.dir, captcha_setting.GENERATOR_FILE_NAME), map_location=self.device)
-        self.netDisc.load_state_dict(os.path.join(self.dir, captcha_setting.DISCRIMINATOR_FILE_NAME),
-                                     map_location=self.device)
+        self.netG.load_state_dict(torch.load(os.path.join(self.dir, captcha_setting.GENERATOR_FILE_NAME), map_location=self.device))
+        self.netG.to(self.device)
+        self.netDisc.load_state_dict(torch.load(os.path.join(self.dir, captcha_setting.DISCRIMINATOR_FILE_NAME), map_location=self.device))
+        self.netDisc.to(self.device)
         print('Models sucessfully loaded from {}'.format(self.dir))
 
     def save_models(self):
@@ -73,7 +75,7 @@ class AdvGAN_Attack:
 
     # using pretrained solver and advGAN generator, generate noise for one CATPCHA image,
     # save the image, noise, and noise + image
-    def attack_n_times(self, n=1, save_images=False):
+    def attack_n_batches(self, n=1, save_images=False):
         self.model.eval()
 
         pretrained_G = self.netG
@@ -92,27 +94,20 @@ class AdvGAN_Attack:
             perturbation = torch.clamp(perturbation, -0.3, 0.3)
             adv_img = perturbation + test_img
             adv_img = torch.clamp(adv_img, 0, 1)
-            predict_label = self.model(adv_img)
+            predict_label = decode_captcha_out(self.model(adv_img))
 
-            c0 = captcha_setting.ALL_CHAR_SET[
-                np.argmax(predict_label[0, 0:captcha_setting.ALL_CHAR_SET_LEN].data.numpy())]
-            c1 = captcha_setting.ALL_CHAR_SET[np.argmax(
-                predict_label[0, captcha_setting.ALL_CHAR_SET_LEN:2 * captcha_setting.ALL_CHAR_SET_LEN].data.numpy())]
-            c2 = captcha_setting.ALL_CHAR_SET[np.argmax(
-                predict_label[0,
-                2 * captcha_setting.ALL_CHAR_SET_LEN:3 * captcha_setting.ALL_CHAR_SET_LEN].data.numpy())]
-            c3 = captcha_setting.ALL_CHAR_SET[np.argmax(
-                predict_label[0,
-                3 * captcha_setting.ALL_CHAR_SET_LEN:4 * captcha_setting.ALL_CHAR_SET_LEN].data.numpy())]
-            predict_label = '%s%s%s%s' % (c0, c1, c2, c3)
             true_label = one_hot_encoding.decode(test_label.numpy()[0])
 
             num_correct += 1 if predict_label == true_label else 0
 
-            if save_image:
-                save_image(test_img[0], path.join(captcha_setting.IMAGE_PATH, '{}-{}.png'.format(i, 'original')))
-                save_image(perturbation[0], path.join(captcha_setting.IMAGE_PATH, '{}-{}.png'.format(i, 'noise')))
-                save_image(adv_img[0], path.join(captcha_setting.IMAGE_PATH, '{}-{}.png'.format(i, 'adv')))
+            if save_images:
+                for j in range(len(test_img)):
+                    test_image = test_img[j]
+                    perturbation_image = perturbation[j]
+                    adv_image = adv_img[j]
+                    save_image(test_image, path.join(captcha_setting.IMAGE_PATH, 'batch-{}-{}-{}.png'.format(i, j, 'original')))
+                    save_image(perturbation_image, path.join(captcha_setting.IMAGE_PATH, 'batch-{}-{}-{}.png'.format(i, j, 'noise')))
+                    save_image(adv_image, path.join(captcha_setting.IMAGE_PATH, 'batch-{}-{}-{}.png'.format(i, j, 'adv')))
 
             if times_attacked >= n:
                 break

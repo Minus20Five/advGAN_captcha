@@ -101,10 +101,11 @@ def old_so_use_attack_n_times():
 
 
 if __name__ == '__main__':
-    pretrained_model = "./models/model.pkl"
     solver = CNN()
-    solver.load_state_dict(torch.load(pretrained_model, map_location=training_device()))
+    solver.load_state_dict(torch.load(captcha_setting.SOLVER_SAVE_PATH, map_location=training_device()))
     solver.eval()
     advGan = AdvGAN_Attack(model=solver)
-    num_attacked, num_correct = advGan.attack_n_times(n=1, save_images=True)
+    advGan.load_models()
+
+    num_attacked, num_correct = advGan.attack_n_batches(n=1, save_images=True)
     print("Total: {} Correct: {}".format(num_attacked, num_correct))
