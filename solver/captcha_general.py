@@ -4,6 +4,9 @@ from solver import captcha_setting, one_hot_encoding, my_dataset
 
 
 # Batch decode
+from solver.my_dataset import get_test_data_loader
+
+
 def decode_captcha_batch(batch):
     out = []
     for j, _ in enumerate(batch):
@@ -25,8 +28,9 @@ def decode_captcha_single(prediction):
     return '%s%s%s%s' % (c0, c1, c2, c3)
 
 
-def predict_n_batches(model, n=1):
-    test_dataloader = my_dataset.get_test_data_loader(batch_size=64)
+def predict_n_batches(model, n=1, data_loader=get_test_data_loader(batch_size=64)):
+    model.eval()
+    test_dataloader = data_loader
     correct = 0
     total = 0
     batches_predicted = 0
