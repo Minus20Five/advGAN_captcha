@@ -1,14 +1,20 @@
+from os import path
+
 import torch.nn as nn
 import torch
 import torch.nn.functional as F
 import os
+import numpy as np
+
+from torchvision.utils import save_image
 
 from advgan import models
-from solver import captcha_setting
-from utils.utils import mkdir_p
+from solver import captcha_setting, one_hot_encoding
+from solver.captcha_cnn_model import CNN
+from solver.my_dataset import get_test_data_loader
+from utils.utils import mkdir_p, training_device
 
 models_path = './models/'
-
 
 # custom weights initialization called on netG and netD
 def weights_init(m):
@@ -22,25 +28,22 @@ def weights_init(m):
 
 class AdvGAN_Attack:
     def __init__(self,
-                 device,
                  model,
-                 model_num_labels,
-                 image_nc,
-                 box_min,
-                 box_max):
-        output_nc = image_nc
-        self.device = device
-        self.model_num_labels = model_num_labels
-        self.model = model
+                 image_nc=1,
+                 box_min=0,
+                 box_max=1,
+                 device='cuda'):
+        self.device = training_device(device)
+        print("Using: " + self.device)
+
+        self.model = model.to(self.device)
         self.input_nc = image_nc
-        self.output_nc = output_nc
+        self.gen_input_nc = image_nc
         self.box_min = box_min
         self.box_max = box_max
-
-        self.gen_input_nc = image_nc
-        self.netG = models.Generator(self.gen_input_nc, image_nc).to(device)
-        self.netDisc = models.Discriminator(image_nc).to(device)
-
+        self.netG = models.Generator(self.gen_input_nc, image_nc).to(self.device)
+        self.netDisc = models.Discriminator(image_nc).to(self.device)
+        self.batch_size = 64
         # initialize all weights
         self.netG.apply(weights_init)
         self.netDisc.apply(weights_init)
@@ -59,7 +62,8 @@ class AdvGAN_Attack:
 
     def load_models(self):
         self.netG.load_state_dict(os.path.join(self.dir, captcha_setting.GENERATOR_FILE_NAME), map_location=self.device)
-        self.netDisc.load_state_dict(os.path.join(self.dir, captcha_setting.DISCRIMINATOR_FILE_NAME), map_location=self.device)
+        self.netDisc.load_state_dict(os.path.join(self.dir, captcha_setting.DISCRIMINATOR_FILE_NAME),
+                                     map_location=self.device)
         print('Models sucessfully loaded from {}'.format(self.dir))
 
     def save_models(self):
@@ -67,7 +71,57 @@ class AdvGAN_Attack:
         torch.save(self.netG.state_dict(), os.path.join(self.dir, captcha_setting.DISCRIMINATOR_FILE_NAME))
         print('Models sucessfully saved at {}'.format(self.dir))
 
+    # using pretrained solver and advGAN generator, generate noise for one CATPCHA image,
+    # save the image, noise, and noise + image
+    def attack_n_times(self, n=1, save_images=False):
+        self.model.eval()
+
+        pretrained_G = self.netG
+        pretrained_G.eval()
+
+        test_dataloader = get_test_data_loader(self.batch_size)
+        times_attacked = 0
+        num_attacked = 0
+        num_correct = 0
+        mkdir_p(captcha_setting.IMAGE_PATH)
+        for i, data in enumerate(test_dataloader, 0):
+            times_attacked += 1
+            test_img, test_label = data
+            num_attacked += test_img.shape[0] # the first dimension of data is the batch_size
+            perturbation = pretrained_G(test_img)
+            perturbation = torch.clamp(perturbation, -0.3, 0.3)
+            adv_img = perturbation + test_img
+            adv_img = torch.clamp(adv_img, 0, 1)
+            predict_label = self.model(adv_img)
+
+            c0 = captcha_setting.ALL_CHAR_SET[
+                np.argmax(predict_label[0, 0:captcha_setting.ALL_CHAR_SET_LEN].data.numpy())]
+            c1 = captcha_setting.ALL_CHAR_SET[np.argmax(
+                predict_label[0, captcha_setting.ALL_CHAR_SET_LEN:2 * captcha_setting.ALL_CHAR_SET_LEN].data.numpy())]
+            c2 = captcha_setting.ALL_CHAR_SET[np.argmax(
+                predict_label[0,
+                2 * captcha_setting.ALL_CHAR_SET_LEN:3 * captcha_setting.ALL_CHAR_SET_LEN].data.numpy())]
+            c3 = captcha_setting.ALL_CHAR_SET[np.argmax(
+                predict_label[0,
+                3 * captcha_setting.ALL_CHAR_SET_LEN:4 * captcha_setting.ALL_CHAR_SET_LEN].data.numpy())]
+            predict_label = '%s%s%s%s' % (c0, c1, c2, c3)
+            true_label = one_hot_encoding.decode(test_label.numpy()[0])
+
+            num_correct += 1 if predict_label == true_label else 0
+
+            if save_image:
+                save_image(test_img[0], path.join(captcha_setting.IMAGE_PATH, '{}-{}.png'.format(i, 'original')))
+                save_image(perturbation[0], path.join(captcha_setting.IMAGE_PATH, '{}-{}.png'.format(i, 'noise')))
+                save_image(adv_img[0], path.join(captcha_setting.IMAGE_PATH, '{}-{}.png'.format(i, 'adv')))
+
+            if times_attacked >= n:
+                break
+
+        return num_attacked, num_correct
+
     def train_batch(self, x, labels):
+        self.netG.train()
+        self.netDisc.train()
         # optimize D
         for i in range(1):
             perturbation = self.netG(x)
@@ -127,7 +181,9 @@ class AdvGAN_Attack:
         return loss_D_GAN.item(), loss_G_fake.item(), loss_perturb.item(), loss_adv.item()
 
     def train(self, train_dataloader, epochs):
-        for epoch in range(1, epochs+1):
+        self.netG.train()
+        self.netDisc.train()
+        for epoch in range(1, epochs + 1):
 
             if epoch == 50:
                 self.optimizer_G = torch.optim.Adam(self.netG.parameters(),
@@ -154,20 +210,19 @@ class AdvGAN_Attack:
                 loss_perturb_sum += loss_perturb_batch
                 loss_adv_sum += loss_adv_batch
 
-                if (i%20 == 0):
+                if (i % 20 == 0):
                     print("\tstep %d:\n\tloss_D: %.3f, loss_G_fake: %.3f,\
                         \n\tloss_perturb: %.3f, loss_adv: %.3f, \n" %
-                    (i, loss_D_batch, loss_G_fake_batch,
-                    loss_perturb_batch, loss_adv_batch))
+                          (i, loss_D_batch, loss_G_fake_batch,
+                           loss_perturb_batch, loss_adv_batch))
             # print statistics
             num_batch = len(train_dataloader)
             print("epoch %d:\nloss_D: %.3f, loss_G_fake: %.3f,\
              \nloss_perturb: %.3f, loss_adv: %.3f, \n" %
-                  (epoch, loss_D_sum/num_batch, loss_G_fake_sum/num_batch,
-                   loss_perturb_sum/num_batch, loss_adv_sum/num_batch))
+                  (epoch, loss_D_sum / num_batch, loss_G_fake_sum / num_batch,
+                   loss_perturb_sum / num_batch, loss_adv_sum / num_batch))
 
             # save generator
-            if epoch%20==0:
+            if epoch % 20 == 0:
                 netG_file_name = models_path + 'netG_epoch_' + str(epoch) + '.pkl'
                 torch.save(self.netG.state_dict(), netG_file_name)
-

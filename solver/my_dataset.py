@@ -36,9 +36,9 @@ def get_train_data_loader(batch_size=64):
     dataset = mydataset(captcha_setting.TRAIN_DATASET_PATH, transform=transform)
     return DataLoader(dataset, batch_size, shuffle=True)
 
-def get_test_data_loader():
+def get_test_data_loader(batch_size=64):
     dataset = mydataset(captcha_setting.TEST_DATASET_PATH, transform=transform)
-    return DataLoader(dataset, batch_size=1, shuffle=True)
+    return DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
 def get_predict_data_loader():
     dataset = mydataset(captcha_setting.PREDICT_DATASET_PATH, transform=transform)

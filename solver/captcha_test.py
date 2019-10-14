@@ -8,7 +8,7 @@ from solver.captcha_cnn_model import CNN
 def main():
     cnn = CNN()
     cnn.eval()
-    cnn.load_state_dict(torch.load(captcha_setting.MODEL_SAVE_PATH))
+    cnn.load_state_dict(torch.load('./models/model.pkl'))  # captcha_setting.SOLVER_SAVE_PATH
     print("load cnn net.")
 
     test_dataloader = my_dataset.get_test_data_loader()

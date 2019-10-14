@@ -1,4 +1,6 @@
 # -*- coding: UTF-8 -*-
+import math
+
 import numpy as np
 import torch
 from torch.autograd import Variable
@@ -6,16 +8,19 @@ from torch.autograd import Variable
 from solver import captcha_setting, my_dataset
 from solver.captcha_cnn_model import CNN
 
-def main():
+
+def predict_n(n=math.inf):
     cnn = CNN()
+    cnn.load_state_dict(torch.load(captcha_setting.SOLVER_SAVE_PATH))
     cnn.eval()
-    cnn.load_state_dict(torch.load('model.pkl'))
     print("load cnn net.")
 
     predict_dataloader = my_dataset.get_predict_data_loader()
 
     #vis = Visdom()
+    count = 0
     for i, (images, labels) in enumerate(predict_dataloader):
+        count += 1
         image = images
         vimage = Variable(image)
         predict_label = cnn(vimage)
@@ -28,8 +33,11 @@ def main():
         c = '%s%s%s%s' % (c0, c1, c2, c3)
         print(c)
         #vis.images(image, opts=dict(caption=c))
+        if count >= n:
+            break
+
 
 if __name__ == '__main__':
-    main()
+    predict_n(1)
 
 

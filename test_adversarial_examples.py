@@ -5,10 +5,13 @@ import numpy as np
 
 from torch.utils.data import DataLoader
 from advgan import models
+from advgan.advGAN import AdvGAN_Attack
 from solver import captcha_setting, one_hot_encoding
 from solver.captcha_cnn_model import CNN
 from solver.my_dataset import get_train_data_loader, get_test_data_loader
 from torchvision.utils import save_image
+
+from utils.utils import training_device
 
 use_cuda=True
 image_nc=1
@@ -16,7 +19,7 @@ batch_size = 128
 logging_batch = 100
 test_on_training = False
 
-def main():
+def old_so_use_attack_n_times():
     gen_input_nc = image_nc
 
     # Define what device we are using
@@ -96,5 +99,12 @@ def main():
     print('Total num_correct: ', num_correct)
     print('Total accuracy of adv imgs in testing set: %f\n'%(num_correct/len(test_dataloader)))
 
+
 if __name__ == '__main__':
-    main()
+    pretrained_model = "./models/model.pkl"
+    solver = CNN()
+    solver.load_state_dict(torch.load(pretrained_model, map_location=training_device()))
+    solver.eval()
+    advGan = AdvGAN_Attack(model=solver)
+    num_attacked, num_correct = advGan.attack_n_times(n=1, save_images=True)
+    print("Total: {} Correct: {}".format(num_attacked, num_correct))

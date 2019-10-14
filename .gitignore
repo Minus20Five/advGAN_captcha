@@ -8,3 +8,5 @@ dataset/
 models/
 *.pth
 *.pkl
+*.png
+*.PNG
