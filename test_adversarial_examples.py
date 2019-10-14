@@ -13,5 +13,5 @@ if __name__ == '__main__':
     advGan = AdvGAN_Attack(model=solver)
     advGan.load_models()
 
-    num_attacked, num_correct = advGan.attack_n_batches(n=100, save_images=True)
+    num_attacked, num_correct = advGan.attack_n_batches(n=100, save_images=False)
     print("Total: {} Correct: {} Accuracy: {}".format(num_attacked, num_correct, num_correct/num_attacked))
