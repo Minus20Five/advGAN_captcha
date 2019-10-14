@@ -1,9 +1,8 @@
 import torch
 
 from advgan.advGAN import AdvGAN_Attack
-from solver import captcha_setting, one_hot_encoding
+from solver import captcha_setting
 from solver.captcha_cnn_model import CNN
-
 from utils.utils import training_device
 
 if __name__ == '__main__':

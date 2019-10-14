@@ -1,20 +1,17 @@
 import numpy as np
-import torch
-from torch.autograd import Variable
 
 from solver import captcha_setting, one_hot_encoding, my_dataset
-from solver.captcha_cnn_model import CNN
-from solver.captcha_setting import SOLVER_SAVE_PATH
-from utils.utils import training_device
 
+
+# Batch decode
 def decode_captcha_batch(batch):
     out = []
     for j, _ in enumerate(batch):
-        out.append(decode_captcha_out(batch[j]))
+        out.append(decode_captcha_single(batch[j]))
     return out
 
-
-def decode_captcha_out(prediction):
+# Non-batch decode
+def decode_captcha_single(prediction):
     c0 = captcha_setting.ALL_CHAR_SET[
         np.argmax(prediction[0:captcha_setting.ALL_CHAR_SET_LEN].data.numpy())]
     c1 = captcha_setting.ALL_CHAR_SET[np.argmax(

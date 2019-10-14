@@ -2,6 +2,7 @@
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
+
 from solver import my_dataset, captcha_setting
 from solver.captcha_cnn_model import CNN
 

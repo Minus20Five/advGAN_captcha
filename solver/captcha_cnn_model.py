@@ -1,6 +1,8 @@
 # -*- coding: UTF-8 -*-
 import torch.nn as nn
+
 from solver import captcha_setting
+
 
 # CNN Model (2 conv layer)
 class CNN(nn.Module):

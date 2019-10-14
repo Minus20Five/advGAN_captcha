@@ -1,11 +1,13 @@
 import os
+
 import torch
-import torchvision.transforms as transforms
-from torch.utils.data import DataLoader, Dataset
 import torch.nn.functional as F
-from advgan.models import MNIST_target_net
+import torchvision.transforms as transforms
 from PIL import Image
 from generate_captchas import LABEL_SEQ_VALUE, LABEL_SEQ_LENGTH
+from torch.utils.data import DataLoader, Dataset
+
+from advgan.models import MNIST_target_net
 
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 

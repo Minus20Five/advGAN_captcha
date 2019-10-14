@@ -1,16 +1,13 @@
+import os
 from os import path
 
-import torch.nn as nn
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
-import os
-import numpy as np
-
 from torchvision.utils import save_image
 
 from advgan import models
 from solver import captcha_setting, one_hot_encoding
-from solver.captcha_cnn_model import CNN
 from solver.captcha_general import decode_captcha_batch
 from solver.my_dataset import get_test_data_loader
 from utils.utils import mkdir_p, training_device

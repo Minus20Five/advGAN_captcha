@@ -1,8 +1,8 @@
 import torch
-from advgan.advGAN import AdvGAN_Attack
-from solver.captcha_cnn_model import CNN
-from solver import captcha_setting
 
+from advgan.advGAN import AdvGAN_Attack
+from solver import captcha_setting
+from solver.captcha_cnn_model import CNN
 from solver.my_dataset import get_train_data_loader
 
 

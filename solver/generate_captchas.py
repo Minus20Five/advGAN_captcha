@@ -1,8 +1,9 @@
-from wheezy.captcha import image as wheezy_captcha
 import os
 import random
 import string
 from multiprocessing import Process
+
+from wheezy.captcha import image as wheezy_captcha
 
 NUM_THREADS = 4  # number of threads to use in parallel captcha generation
 TRAIN_SIZE = 80000  # size of training set
