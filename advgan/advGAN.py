@@ -51,7 +51,7 @@ class AdvGAN_Attack:
         self.optimizer_D = torch.optim.Adam(self.netDisc.parameters(),
                                             lr=0.001)
 
-        self.dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), captcha_setting.MODEL_PATH)
+        self.dir = captcha_setting.MODEL_PATH
         mkdir_p(self.dir)
 
         if not os.path.exists(models_path):
@@ -60,10 +60,12 @@ class AdvGAN_Attack:
     def load_models(self):
         self.netG.load_state_dict(os.path.join(self.dir, captcha_setting.GENERATOR_FILE_NAME), map_location=self.device)
         self.netDisc.load_state_dict(os.path.join(self.dir, captcha_setting.DISCRIMINATOR_FILE_NAME), map_location=self.device)
+        print('Models sucessfully loaded from {}'.format(self.dir))
 
     def save_models(self):
         torch.save(self.netDisc.state_dict(), os.path.join(self.dir, captcha_setting.GENERATOR_FILE_NAME))
         torch.save(self.netG.state_dict(), os.path.join(self.dir, captcha_setting.DISCRIMINATOR_FILE_NAME))
+        print('Models sucessfully saved at {}'.format(self.dir))
 
     def train_batch(self, x, labels):
         # optimize D
@@ -117,7 +119,7 @@ class AdvGAN_Attack:
             # loss_adv = - F.cross_entropy(logits_model, labels)
 
             adv_lambda = 10
-            pert_lambda = 1
+            pert_lambda = 10
             loss_G = adv_lambda * loss_adv + pert_lambda * loss_perturb
             loss_G.backward()
             self.optimizer_G.step()
@@ -166,6 +168,6 @@ class AdvGAN_Attack:
 
             # save generator
             if epoch%20==0:
-                netG_file_name = models_path + 'netG_epoch_' + str(epoch) + '.pth'
+                netG_file_name = models_path + 'netG_epoch_' + str(epoch) + '.pkl'
                 torch.save(self.netG.state_dict(), netG_file_name)
 

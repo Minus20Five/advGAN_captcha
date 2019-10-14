@@ -15,7 +15,7 @@ from solver.my_dataset import get_train_data_loader
 def main():
     use_cuda = True
     image_nc = 1  # 'nc' means number of channels ( i think)
-    epochs = 1
+    epochs = 40
     batch_size = 128
     BOX_MIN = 0
     BOX_MAX = 1
@@ -44,6 +44,7 @@ def main():
                         BOX_MAX)
 
     advGAN.train(dataloader, epochs)
+    advGAN.save_models()
 
 if __name__ == '__main__':
     main()
