@@ -11,7 +11,7 @@ from torchvision.utils import save_image
 from advgan import models
 from solver import captcha_setting, one_hot_encoding
 from solver.captcha_cnn_model import CNN
-from solver.captcha_general import decode_captcha_out
+from solver.captcha_general import decode_captcha_batch
 from solver.my_dataset import get_test_data_loader
 from utils.utils import mkdir_p, training_device
 
@@ -88,23 +88,23 @@ class AdvGAN_Attack:
         mkdir_p(captcha_setting.IMAGE_PATH)
         for i, data in enumerate(test_dataloader, 0):
             times_attacked += 1
-            test_img, test_label = data
-            num_attacked += test_img.shape[0] # the first dimension of data is the batch_size
-            perturbation = pretrained_G(test_img)
-            perturbation = torch.clamp(perturbation, -0.3, 0.3)
-            adv_img = perturbation + test_img
-            adv_img = torch.clamp(adv_img, 0, 1)
-            predict_label = decode_captcha_out(self.model(adv_img))
+            test_images, test_labels = data
+            num_attacked += test_images.shape[0] # the first dimension of data is the batch_size
+            perturbations = pretrained_G(test_images)
+            perturbations = torch.clamp(perturbations, -0.3, 0.3)
+            adv_images = perturbations + test_images
+            adv_images = torch.clamp(adv_images, 0, 1)
 
-            true_label = one_hot_encoding.decode(test_label.numpy()[0])
-
-            num_correct += 1 if predict_label == true_label else 0
+            predict_labels = decode_captcha_batch(self.model(adv_images))
+            true_labels = [one_hot_encoding.decode(test_label) for test_label in test_labels.numpy()]
+            for predict_label, true_label in zip(predict_labels, true_labels):
+                num_correct += 1 if predict_label == true_label else 0
 
             if save_images:
-                for j in range(len(test_img)):
-                    test_image = test_img[j]
-                    perturbation_image = perturbation[j]
-                    adv_image = adv_img[j]
+                for j in range(len(test_images)):
+                    test_image = test_images[j]
+                    perturbation_image = perturbations[j]
+                    adv_image = adv_images[j]
                     save_image(test_image, path.join(captcha_setting.IMAGE_PATH, 'batch-{}-{}-{}.png'.format(i, j, 'original')))
                     save_image(perturbation_image, path.join(captcha_setting.IMAGE_PATH, 'batch-{}-{}-{}.png'.format(i, j, 'noise')))
                     save_image(adv_image, path.join(captcha_setting.IMAGE_PATH, 'batch-{}-{}-{}.png'.format(i, j, 'adv')))
