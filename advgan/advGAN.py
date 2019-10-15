@@ -64,16 +64,18 @@ class AdvGAN_Attack:
                     discriminator_filename=captcha_setting.DISCRIMINATOR_FILE_PATH):
         self.netG.load_state_dict(torch.load(generator_filename, map_location=self.device))
         self.netG.to(self.device)
+        print('Generator sucessfully loaded from {}'.format(generator_filename))
         self.netDisc.load_state_dict(
             torch.load(os.path.join(discriminator_filename), map_location=self.device))
         self.netDisc.to(self.device)
-        print('Models sucessfully loaded from {}'.format(self.dir))
+        print('Discriminator sucessfully loaded from {}'.format(discriminator_filename))
 
     def save_models(self, generator_filename=captcha_setting.GENERATOR_FILE_PATH,
                     discriminator_filename=captcha_setting.DISCRIMINATOR_FILE_PATH):
-        torch.save(self.netDisc.state_dict(), discriminator_filename)
         torch.save(self.netG.state_dict(), generator_filename)
-        print('Models sucessfully saved at {}'.format(self.dir))
+        print('Generator sucessfully saved at {}'.format(generator_filename))
+        torch.save(self.netDisc.state_dict(), discriminator_filename)        
+        print('Discriminator sucessfully saved at {}'.format(discriminator_filename))
 
     # using pretrained solver and advGAN generator, generate noise for one CATPCHA image,
     # save the image, noise, and noise + image
