@@ -4,6 +4,7 @@ import os
 import torchvision.transforms as transforms
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset
+
 from solver import captcha_setting
 from solver import one_hot_encoding as ohe
 
@@ -32,14 +33,13 @@ transform = transforms.Compose([
     transforms.ToTensor(),
     # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
-def get_train_data_loader():
-
+def get_train_data_loader(batch_size=64):
     dataset = mydataset(captcha_setting.TRAIN_DATASET_PATH, transform=transform)
-    return DataLoader(dataset, batch_size=64, shuffle=True)
+    return DataLoader(dataset, batch_size, shuffle=True)
 
-def get_test_data_loader():
+def get_test_data_loader(batch_size=64):
     dataset = mydataset(captcha_setting.TEST_DATASET_PATH, transform=transform)
-    return DataLoader(dataset, batch_size=1, shuffle=True)
+    return DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
 def get_predict_data_loader():
     dataset = mydataset(captcha_setting.PREDICT_DATASET_PATH, transform=transform)

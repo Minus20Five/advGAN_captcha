@@ -1,11 +1,16 @@
-import torch.nn as nn
-import torch
-import torch.nn.functional as F
 import os
+from os import path
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torchvision.utils import save_image
 
 from advgan import models
-from solver import captcha_setting
-from utils.utils import mkdir_p
+from solver import captcha_setting, one_hot_encoding
+from solver.captcha_general import decode_captcha_batch
+from solver.my_dataset import get_test_data_loader
+from utils.utils import mkdir_p, training_device
 
 models_path = './models/'
 
@@ -22,25 +27,22 @@ def weights_init(m):
 
 class AdvGAN_Attack:
     def __init__(self,
-                 device,
                  model,
-                 model_num_labels,
-                 image_nc,
-                 box_min,
-                 box_max):
-        output_nc = image_nc
-        self.device = device
-        self.model_num_labels = model_num_labels
-        self.model = model
+                 image_nc=1,
+                 box_min=0,
+                 box_max=1,
+                 device='cuda'):
+        self.device = training_device(device)
+        print("Using: " + self.device)
+
+        self.model = model.to(self.device)
         self.input_nc = image_nc
-        self.output_nc = output_nc
+        self.gen_input_nc = image_nc
         self.box_min = box_min
         self.box_max = box_max
-
-        self.gen_input_nc = image_nc
-        self.netG = models.Generator(self.gen_input_nc, image_nc).to(device)
-        self.netDisc = models.Discriminator(image_nc).to(device)
-
+        self.netG = models.Generator(self.gen_input_nc, image_nc).to(self.device)
+        self.netDisc = models.Discriminator(image_nc).to(self.device)
+        self.batch_size = 64
         # initialize all weights
         self.netG.apply(weights_init)
         self.netDisc.apply(weights_init)
@@ -51,21 +53,74 @@ class AdvGAN_Attack:
         self.optimizer_D = torch.optim.Adam(self.netDisc.parameters(),
                                             lr=0.001)
 
-        self.dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), captcha_setting.MODEL_PATH)
+        self.dir = captcha_setting.MODEL_PATH
         mkdir_p(self.dir)
 
         if not os.path.exists(models_path):
             os.makedirs(models_path)
 
-    def load_models(self):
-        self.netG.load_state_dict(os.path.join(self.dir, captcha_setting.GENERATOR_FILE_NAME), map_location=self.device)
-        self.netDisc.load_state_dict(os.path.join(self.dir, captcha_setting.DISCRIMINATOR_FILE_NAME), map_location=self.device)
+    def load_models(self, generator_filename=captcha_setting.GENERATOR_FILE_NAME,
+                    discriminator_filename=captcha_setting.DISCRIMINATOR_FILE_NAME):
+        self.netG.load_state_dict(torch.load(os.path.join(self.dir, generator_filename), map_location=self.device))
+        self.netG.to(self.device)
+        self.netDisc.load_state_dict(
+            torch.load(os.path.join(self.dir, discriminator_filename), map_location=self.device))
+        self.netDisc.to(self.device)
+        print('Models sucessfully loaded from {}'.format(self.dir))
 
-    def save_models(self):
-        torch.save(self.netDisc.state_dict(), os.path.join(self.dir, captcha_setting.GENERATOR_FILE_NAME))
-        torch.save(self.netG.state_dict(), os.path.join(self.dir, captcha_setting.DISCRIMINATOR_FILE_NAME))
+    def save_models(self, generator_filename=captcha_setting.GENERATOR_FILE_NAME,
+                    discriminator_filename=captcha_setting.DISCRIMINATOR_FILE_NAME):
+        torch.save(self.netDisc.state_dict(), os.path.join(self.dir, generator_filename))
+        torch.save(self.netG.state_dict(), os.path.join(self.dir, discriminator_filename))
+        print('Models sucessfully saved at {}'.format(self.dir))
+
+    # using pretrained solver and advGAN generator, generate noise for one CATPCHA image,
+    # save the image, noise, and noise + image
+    def attack_n_batches(self, n=1, save_images=False):
+        self.model.eval()
+
+        pretrained_G = self.netG
+        pretrained_G.eval()
+
+        test_dataloader = get_test_data_loader(self.batch_size)
+        times_attacked = 0
+        num_attacked = 0
+        num_correct = 0
+        mkdir_p(captcha_setting.IMAGE_PATH)
+        for i, data in enumerate(test_dataloader, 0):
+            times_attacked += 1
+            test_images, test_labels = data
+            num_attacked += test_images.shape[0]  # the first dimension of data is the batch_size
+            perturbations = pretrained_G(test_images)
+            perturbations = torch.clamp(perturbations, -0.3, 0.3)
+            adv_images = perturbations + test_images
+            adv_images = torch.clamp(adv_images, 0, 1)
+
+            predict_labels = decode_captcha_batch(self.model(adv_images))
+            true_labels = [one_hot_encoding.decode(test_label) for test_label in test_labels.numpy()]
+            for predict_label, true_label in zip(predict_labels, true_labels):
+                num_correct += 1 if predict_label == true_label else 0
+
+            if save_images:
+                for j in range(len(test_images)):
+                    test_image = test_images[j]
+                    perturbation_image = perturbations[j]
+                    adv_image = adv_images[j]
+                    save_image(test_image,
+                               path.join(captcha_setting.IMAGE_PATH, 'batch-{}-{}-{}.png'.format(i, j, 'original')))
+                    save_image(perturbation_image,
+                               path.join(captcha_setting.IMAGE_PATH, 'batch-{}-{}-{}.png'.format(i, j, 'noise')))
+                    save_image(adv_image,
+                               path.join(captcha_setting.IMAGE_PATH, 'batch-{}-{}-{}.png'.format(i, j, 'adv')))
+
+            if times_attacked >= n:
+                break
+
+        return num_attacked, num_correct
 
     def train_batch(self, x, labels):
+        self.netG.train()
+        self.netDisc.train()
         # optimize D
         for i in range(1):
             perturbation = self.netG(x)
@@ -117,7 +172,7 @@ class AdvGAN_Attack:
             # loss_adv = - F.cross_entropy(logits_model, labels)
 
             adv_lambda = 10
-            pert_lambda = 1
+            pert_lambda = 10
             loss_G = adv_lambda * loss_adv + pert_lambda * loss_perturb
             loss_G.backward()
             self.optimizer_G.step()
@@ -125,7 +180,9 @@ class AdvGAN_Attack:
         return loss_D_GAN.item(), loss_G_fake.item(), loss_perturb.item(), loss_adv.item()
 
     def train(self, train_dataloader, epochs):
-        for epoch in range(1, epochs+1):
+        self.netG.train()
+        self.netDisc.train()
+        for epoch in range(1, epochs + 1):
 
             if epoch == 50:
                 self.optimizer_G = torch.optim.Adam(self.netG.parameters(),
@@ -152,20 +209,19 @@ class AdvGAN_Attack:
                 loss_perturb_sum += loss_perturb_batch
                 loss_adv_sum += loss_adv_batch
 
-                if (i%20 == 0):
+                if (i % 20 == 0):
                     print("\tstep %d:\n\tloss_D: %.3f, loss_G_fake: %.3f,\
                         \n\tloss_perturb: %.3f, loss_adv: %.3f, \n" %
-                    (i, loss_D_batch, loss_G_fake_batch,
-                    loss_perturb_batch, loss_adv_batch))
+                          (i, loss_D_batch, loss_G_fake_batch,
+                           loss_perturb_batch, loss_adv_batch))
             # print statistics
             num_batch = len(train_dataloader)
             print("epoch %d:\nloss_D: %.3f, loss_G_fake: %.3f,\
              \nloss_perturb: %.3f, loss_adv: %.3f, \n" %
-                  (epoch, loss_D_sum/num_batch, loss_G_fake_sum/num_batch,
-                   loss_perturb_sum/num_batch, loss_adv_sum/num_batch))
+                  (epoch, loss_D_sum / num_batch, loss_G_fake_sum / num_batch,
+                   loss_perturb_sum / num_batch, loss_adv_sum / num_batch))
 
             # save generator
-            if epoch%1==0:
-                netG_file_name = models_path + 'netG_epoch_' + str(epoch) + '.pth'
+            if epoch % 20 == 0:
+                netG_file_name = models_path + 'netG_epoch_' + str(epoch) + '.pkl'
                 torch.save(self.netG.state_dict(), netG_file_name)
-

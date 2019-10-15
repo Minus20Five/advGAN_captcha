@@ -1,6 +1,8 @@
 import errno
 import os
 
+import torch
+
 
 def mkdir_p(path):
     try:
@@ -10,3 +12,7 @@ def mkdir_p(path):
             pass
         else:
             raise
+
+
+def training_device(device='cuda'):
+    return 'cuda' if device == 'cuda' and torch.cuda.is_available() else 'cpu'

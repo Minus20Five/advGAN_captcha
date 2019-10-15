@@ -1,24 +1,16 @@
 import torch
-import torchvision.datasets
-import torchvision.transforms as transforms
-from torch.utils.data import DataLoader
+
 from advgan.advGAN import AdvGAN_Attack
-from solver.captcha_cnn_model import CNN
 from solver import captcha_setting
-
-from solver.my_dataset import get_train_data_loader, get_test_data_loader
-
-# from advgan.models import MNIST_target_net
+from solver.captcha_cnn_model import CNN
 from solver.my_dataset import get_train_data_loader
 
 
 def main():
     use_cuda = True
     image_nc = 1  # 'nc' means number of channels ( i think)
-    epochs = 1
+    epochs = 40
     batch_size = 128
-    BOX_MIN = 0
-    BOX_MAX = 1
 
     # Define what device we are using
     print("CUDA Available: ", torch.cuda.is_available())
@@ -27,7 +19,7 @@ def main():
     # pretrained_model = "./MNIST_target_model.pth"
     # targeted_model = MNIST_target_net().to(device)
     targeted_model = CNN().to(device)
-    targeted_model.load_state_dict(torch.load(captcha_setting.MODEL_SAVE_PATH, map_location=device))
+    targeted_model.load_state_dict(torch.load(captcha_setting.SOLVER_SAVE_PATH, map_location=device))
     targeted_model.eval()
     # model_num_labels = 10
     model_num_labels = captcha_setting.ALL_CHAR_SET_LEN
@@ -36,14 +28,12 @@ def main():
     # mnist_dataset = torchvision.datasets.MNIST('./dataset', train=True, transform=transforms.ToTensor(), download=True)
     # dataloader = DataLoader(mnist_dataset, batch_size=batch_size, shuffle=True, num_workers=1)
     dataloader = get_train_data_loader()
-    advGAN = AdvGAN_Attack(device,
-                        targeted_model,
-                        model_num_labels,
-                        image_nc,
-                        BOX_MIN,
-                        BOX_MAX)
-
+    advGAN = AdvGAN_Attack(targeted_model,
+                           device=device,
+                           image_nc=image_nc)
     advGAN.train(dataloader, epochs)
+    advGAN.save_models()
+
 
 if __name__ == '__main__':
     main()

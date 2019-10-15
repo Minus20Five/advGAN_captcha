@@ -1,6 +1,8 @@
 # -*- coding: UTF-8 -*-
 import numpy as np
+
 from solver import captcha_setting
+
 
 def encode(text):
     vector = np.zeros(captcha_setting.ALL_CHAR_SET_LEN * captcha_setting.MAX_CAPTCHA, dtype=float)
