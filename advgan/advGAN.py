@@ -70,8 +70,8 @@ class AdvGAN_Attack:
 
     def save_models(self, generator_filename=captcha_setting.GENERATOR_FILE_NAME,
                     discriminator_filename=captcha_setting.DISCRIMINATOR_FILE_NAME):
-        torch.save(self.netDisc.state_dict(), os.path.join(self.dir, generator_filename))
-        torch.save(self.netG.state_dict(), os.path.join(self.dir, discriminator_filename))
+        torch.save(self.netDisc.state_dict(), os.path.join(self.dir, discriminator_filename))
+        torch.save(self.netG.state_dict(), os.path.join(self.dir, generator_filename))
         print('Models sucessfully saved at {}'.format(self.dir))
 
     # using pretrained solver and advGAN generator, generate noise for one CATPCHA image,
@@ -172,7 +172,7 @@ class AdvGAN_Attack:
             # loss_adv = - F.cross_entropy(logits_model, labels)
 
             adv_lambda = 10
-            pert_lambda = 10
+            pert_lambda = 1
             loss_G = adv_lambda * loss_adv + pert_lambda * loss_perturb
             loss_G.backward()
             self.optimizer_G.step()
