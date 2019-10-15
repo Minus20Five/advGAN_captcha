@@ -1,6 +1,7 @@
 import torch
 import argparse
 
+from os import path
 from advgan.advGAN import AdvGAN_Attack
 from solver import captcha_setting
 from solver.captcha_cnn_model import CNN
@@ -33,12 +34,24 @@ parser.add_argument(
     type=float,
     default=0.05
 )
+parser.add_argument(
+    '--generator_name', '-g',
+    help='name to save generator as under the default models folder',
+    default=captcha_setting.GENERATOR_FILE_NAME
+)
+parser.add_argument(
+    '--discriminator_name', '-d',
+    help='name to save discriminator as under the default models folder',
+    default=captcha_setting.DISCRIMINATOR_FILE_NAME
+)
 
 args = parser.parse_args()
 target_solver_path = args.target
 device = 'cuda' if args.cuda else 'cpu'
 epochs = args.epochs
 bounds = args.bounds
+generator_path = path.join(captcha_setting.MODEL_PATH, args.generator_name)
+discriminator_path = path.join(captcha_setting.MODEL_PATH, args.discriminator_name)
 
 image_nc = 1  # 'nc' means number of channels ( i think)
 batch_size = 128
@@ -62,7 +75,7 @@ def main():
                             image_nc=image_nc,
                             clamp=bounds)
     advGAN.train(dataloader, epochs)
-    advGAN.save_models()
+    advGAN.save_models(generator_filename=generator_path, discriminator_filename=discriminator_path)
 
 
 if __name__ == '__main__':
