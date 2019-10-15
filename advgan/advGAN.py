@@ -116,6 +116,8 @@ class AdvGAN_Attack:
             if times_attacked >= n:
                 break
 
+            print("Total: {} Correct: {} Accuracy: {}".format(num_attacked, num_correct, num_correct / num_attacked))
+
         return num_attacked, num_correct
 
     def train_batch(self, x, labels):
