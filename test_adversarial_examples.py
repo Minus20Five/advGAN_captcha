@@ -9,7 +9,7 @@ if __name__ == '__main__':
     solver = CNN()
     solver.load_state_dict(torch.load(captcha_setting.SOLVER_SAVE_PATH, map_location=training_device()))
     solver.eval()
-    advGan = AdvGAN_Attack(model=solver)
+    advGan = AdvGAN_Attack(model=solver, device='cpu')
     advGan.load_models()
 
     num_attacked, num_correct = advGan.attack_n_batches(n=100, save_images=False)

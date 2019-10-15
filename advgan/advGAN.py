@@ -13,7 +13,7 @@ from solver.my_dataset import get_test_data_loader
 from utils.utils import mkdir_p, training_device
 
 models_path = './models/'
-
+clamp_amount = 0.05
 
 # custom weights initialization called on netG and netD
 def weights_init(m):
@@ -70,8 +70,8 @@ class AdvGAN_Attack:
 
     def save_models(self, generator_filename=captcha_setting.GENERATOR_FILE_NAME,
                     discriminator_filename=captcha_setting.DISCRIMINATOR_FILE_NAME):
-        torch.save(self.netDisc.state_dict(), os.path.join(self.dir, generator_filename))
-        torch.save(self.netG.state_dict(), os.path.join(self.dir, discriminator_filename))
+        torch.save(self.netDisc.state_dict(), os.path.join(self.dir, discriminator_filename))
+        torch.save(self.netG.state_dict(), os.path.join(self.dir, generator_filename))
         print('Models sucessfully saved at {}'.format(self.dir))
 
     # using pretrained solver and advGAN generator, generate noise for one CATPCHA image,
@@ -92,7 +92,7 @@ class AdvGAN_Attack:
             test_images, test_labels = data
             num_attacked += test_images.shape[0]  # the first dimension of data is the batch_size
             perturbations = pretrained_G(test_images)
-            perturbations = torch.clamp(perturbations, -0.3, 0.3)
+            perturbations = torch.clamp(perturbations, 0.0-clamp_amount, clamp_amount)
             adv_images = perturbations + test_images
             adv_images = torch.clamp(adv_images, 0, 1)
 
@@ -116,6 +116,8 @@ class AdvGAN_Attack:
             if times_attacked >= n:
                 break
 
+            print("Total: {} Correct: {} Accuracy: {}".format(num_attacked, num_correct, num_correct / num_attacked))
+
         return num_attacked, num_correct
 
     def train_batch(self, x, labels):
@@ -126,7 +128,7 @@ class AdvGAN_Attack:
             perturbation = self.netG(x)
 
             # add a clipping trick
-            adv_images = torch.clamp(perturbation, -0.3, 0.3) + x
+            adv_images = torch.clamp(perturbation, 0.0-clamp_amount, clamp_amount) + x
             adv_images = torch.clamp(adv_images, self.box_min, self.box_max)
 
             self.optimizer_D.zero_grad()
@@ -172,7 +174,7 @@ class AdvGAN_Attack:
             # loss_adv = - F.cross_entropy(logits_model, labels)
 
             adv_lambda = 10
-            pert_lambda = 10
+            pert_lambda = 1
             loss_G = adv_lambda * loss_adv + pert_lambda * loss_perturb
             loss_G.backward()
             self.optimizer_G.step()
