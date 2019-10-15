@@ -13,7 +13,7 @@ from solver.my_dataset import get_test_data_loader
 from utils.utils import mkdir_p, training_device
 
 models_path = './models/'
-
+clamp_amount = 0.05
 
 # custom weights initialization called on netG and netD
 def weights_init(m):
@@ -92,7 +92,7 @@ class AdvGAN_Attack:
             test_images, test_labels = data
             num_attacked += test_images.shape[0]  # the first dimension of data is the batch_size
             perturbations = pretrained_G(test_images)
-            perturbations = torch.clamp(perturbations, -0.3, 0.3)
+            perturbations = torch.clamp(perturbations, 0.0-clamp_amount, clamp_amount)
             adv_images = perturbations + test_images
             adv_images = torch.clamp(adv_images, 0, 1)
 
@@ -126,7 +126,7 @@ class AdvGAN_Attack:
             perturbation = self.netG(x)
 
             # add a clipping trick
-            adv_images = torch.clamp(perturbation, -0.3, 0.3) + x
+            adv_images = torch.clamp(perturbation, 0.0-clamp_amount, clamp_amount) + x
             adv_images = torch.clamp(adv_images, self.box_min, self.box_max)
 
             self.optimizer_D.zero_grad()

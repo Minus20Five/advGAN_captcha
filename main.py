@@ -10,7 +10,7 @@ from utils.utils import training_device
 def main():
     use_cuda = True
     image_nc = 1  # 'nc' means number of channels ( i think)
-    epochs = 40
+    epochs = 1
     batch_size = 128
 
     # pretrained_model = "./MNIST_target_model.pth"
