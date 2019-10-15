@@ -13,7 +13,6 @@ from solver.my_dataset import get_test_data_loader
 from utils.utils import mkdir_p, training_device
 
 models_path = './models/'
-clamp_amount = 0.05
 
 # custom weights initialization called on netG and netD
 def weights_init(m):
@@ -31,7 +30,8 @@ class AdvGAN_Attack:
                  image_nc=1,
                  box_min=0,
                  box_max=1,
-                 device='cuda'):
+                 device='cuda',
+                 clamp=0.05):
         self.device = training_device(device)
         print("Using: " + self.device)
 
@@ -40,6 +40,7 @@ class AdvGAN_Attack:
         self.gen_input_nc = image_nc
         self.box_min = box_min
         self.box_max = box_max
+        self.clamp = clamp
         self.netG = models.Generator(self.gen_input_nc, image_nc).to(self.device)
         self.netDisc = models.Discriminator(image_nc).to(self.device)
         self.batch_size = 64
@@ -59,19 +60,19 @@ class AdvGAN_Attack:
         if not os.path.exists(models_path):
             os.makedirs(models_path)
 
-    def load_models(self, generator_filename=captcha_setting.GENERATOR_FILE_NAME,
-                    discriminator_filename=captcha_setting.DISCRIMINATOR_FILE_NAME):
-        self.netG.load_state_dict(torch.load(os.path.join(self.dir, generator_filename), map_location=self.device))
+    def load_models(self, generator_filename=captcha_setting.GENERATOR_FILE_PATH,
+                    discriminator_filename=captcha_setting.DISCRIMINATOR_FILE_PATH):
+        self.netG.load_state_dict(torch.load(generator_filename, map_location=self.device))
         self.netG.to(self.device)
         self.netDisc.load_state_dict(
-            torch.load(os.path.join(self.dir, discriminator_filename), map_location=self.device))
+            torch.load(os.path.join(discriminator_filename), map_location=self.device))
         self.netDisc.to(self.device)
         print('Models sucessfully loaded from {}'.format(self.dir))
 
-    def save_models(self, generator_filename=captcha_setting.GENERATOR_FILE_NAME,
-                    discriminator_filename=captcha_setting.DISCRIMINATOR_FILE_NAME):
-        torch.save(self.netDisc.state_dict(), os.path.join(self.dir, discriminator_filename))
-        torch.save(self.netG.state_dict(), os.path.join(self.dir, generator_filename))
+    def save_models(self, generator_filename=captcha_setting.GENERATOR_FILE_PATH,
+                    discriminator_filename=captcha_setting.DISCRIMINATOR_FILE_PATH):
+        torch.save(self.netDisc.state_dict(), discriminator_filename)
+        torch.save(self.netG.state_dict(), generator_filename)
         print('Models sucessfully saved at {}'.format(self.dir))
 
     # using pretrained solver and advGAN generator, generate noise for one CATPCHA image,
@@ -92,7 +93,7 @@ class AdvGAN_Attack:
             test_images, test_labels = data
             num_attacked += test_images.shape[0]  # the first dimension of data is the batch_size
             perturbations = pretrained_G(test_images)
-            perturbations = torch.clamp(perturbations, 0.0-clamp_amount, clamp_amount)
+            perturbations = torch.clamp(perturbations, 0.0-self.clamp, self.clamp)
             adv_images = perturbations + test_images
             adv_images = torch.clamp(adv_images, 0, 1)
 
@@ -128,7 +129,7 @@ class AdvGAN_Attack:
             perturbation = self.netG(x)
 
             # add a clipping trick
-            adv_images = torch.clamp(perturbation, 0.0-clamp_amount, clamp_amount) + x
+            adv_images = torch.clamp(perturbation, 0.0-self.clamp, self.clamp) + x
             adv_images = torch.clamp(adv_images, self.box_min, self.box_max)
 
             self.optimizer_D.zero_grad()
