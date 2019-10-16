@@ -44,6 +44,11 @@ parser.add_argument(
     help='name to save discriminator as under the default models folder',
     default=captcha_setting.DISCRIMINATOR_FILE_NAME
 )
+parser.add_argument(
+    '--smooth', '-s',
+    help='apply label smoothing for training the AdvGan',
+    action='store_true'
+)
 
 args = parser.parse_args()
 target_solver_path = args.target
@@ -52,11 +57,13 @@ epochs = args.epochs
 bounds = args.bounds
 generator_path = path.join(captcha_setting.MODEL_PATH, args.generator_name)
 discriminator_path = path.join(captcha_setting.MODEL_PATH, args.discriminator_name)
+smooth = args.smooth
 
 image_nc = 1  # 'nc' means number of channels ( i think)
 batch_size = 128
 
 def main():
+    print('Label smoothing is {}'.format('ON' if smooth else 'OFF'))
     print('Training for {} epochs with clamp amount +/- {}...'.format(epochs, bounds))
     # pretrained_model = "./MNIST_target_model.pth"
     # targeted_model = MNIST_target_net().to(device)
@@ -74,7 +81,7 @@ def main():
                             device=device,
                             image_nc=image_nc,
                             clamp=bounds)
-    advGAN.train(dataloader, epochs)
+    advGAN.train(dataloader, epochs, smooth=smooth)
     advGAN.save_models(generator_filename=generator_path, discriminator_filename=discriminator_path)
 
 

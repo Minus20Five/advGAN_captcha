@@ -123,7 +123,7 @@ class AdvGAN_Attack:
 
         return num_attacked, num_correct
 
-    def train_batch(self, x, labels):
+    def train_batch(self, x, labels, smooth=False):
         self.netG.train()
         self.netDisc.train()
         # optimize D
@@ -136,11 +136,17 @@ class AdvGAN_Attack:
 
             self.optimizer_D.zero_grad()
             pred_real = self.netDisc(x)
-            loss_D_real = F.mse_loss(pred_real, torch.ones_like(pred_real, device=self.device))
+            real_output_tensor = (torch.ones_like(pred_real, device=self.device) * 0.3 ) + 0.7 if smooth else torch.zeros_like(pred_real, device=self.device)
+            
+            loss_D_real = F.mse_loss(pred_real, real_output_tensor)
             loss_D_real.backward()
 
             pred_fake = self.netDisc(adv_images.detach())
-            loss_D_fake = F.mse_loss(pred_fake, torch.zeros_like(pred_fake, device=self.device))
+            fake_output_tensor = torch.ones_like(pred_fake, device=self.device) * 0.3 if smooth else torch.zeros_like(pred_fake, device=self.device)
+            
+            loss_D_fake = \
+                F.mse_loss(pred_real, torch.ones_like(pred_real, device=self.device)*0.3) if smooth \
+                    else F.mse_loss(pred_fake, torch.zeros_like(pred_fake, device=self.device))
             loss_D_fake.backward()
             loss_D_GAN = loss_D_fake + loss_D_real
             self.optimizer_D.step()
@@ -184,7 +190,7 @@ class AdvGAN_Attack:
 
         return loss_D_GAN.item(), loss_G_fake.item(), loss_perturb.item(), loss_adv.item()
 
-    def train(self, train_dataloader, epochs):
+    def train(self, train_dataloader, epochs, smooth=False):
         self.netG.train()
         self.netDisc.train()
         for epoch in range(1, epochs + 1):
@@ -208,7 +214,7 @@ class AdvGAN_Attack:
                 images, labels = images.to(self.device), labels.to(self.device)
 
                 loss_D_batch, loss_G_fake_batch, loss_perturb_batch, loss_adv_batch = \
-                    self.train_batch(images, labels)
+                    self.train_batch(images, labels, smooth=smooth)
                 loss_D_sum += loss_D_batch
                 loss_G_fake_sum += loss_G_fake_batch
                 loss_perturb_sum += loss_perturb_batch
