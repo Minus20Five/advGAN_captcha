@@ -15,6 +15,8 @@ MAX_CAPTCHA = 4
 IMAGE_HEIGHT = 60
 IMAGE_WIDTH = 160
 
+BATCH_SIZE = 64
+
 TRAIN_DATASET_PATH = 'data' + os.path.sep + 'train'
 TEST_DATASET_PATH = 'data' + os.path.sep + 'test'
 PREDICT_DATASET_PATH = 'data' + os.path.sep + 'predict'

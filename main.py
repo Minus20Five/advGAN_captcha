@@ -29,7 +29,7 @@ parser.add_argument(
     action='store_true'
 )
 parser.add_argument(
-    '-bounds', '-b',
+    '--bounds', '-b',
     help='amount to bound the noise generation',
     type=float,
     default=0.05

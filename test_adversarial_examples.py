@@ -26,11 +26,18 @@ parser.add_argument(
     help='saves the images being tested, as well as the noise both seperately and applied onto original image',
     action='store_true'
 )
+parser.add_argument(
+    '--batches', '-b',
+    help='number of batches to test',
+    type=int,
+    default=captcha_setting.BATCH_SIZE
+)
 
 args = parser.parse_args()
 target_solver_path = args.target
 generator_path = args.generator
 save_images = args.save
+batches = args.batches
 
 if __name__ == '__main__':
     print('Saving is: {}'.format('on' if save_images else 'off'))
@@ -40,5 +47,6 @@ if __name__ == '__main__':
     advGan = AdvGAN_Attack(model=solver, device='cpu')
     advGan.load_models(generator_filename=generator_path)
 
-    num_attacked, num_correct = advGan.attack_n_batches(n=100, save_images=save_images)
+    print('Attacking {} batches'.format(batches))
+    num_attacked, num_correct = advGan.attack_n_batches(n=batches, save_images=save_images)
     print("Total: {} Correct: {} Accuracy: {}".format(num_attacked, num_correct, num_correct/num_attacked))
