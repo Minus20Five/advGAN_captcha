@@ -15,6 +15,8 @@ MAX_CAPTCHA = 4
 IMAGE_HEIGHT = 60
 IMAGE_WIDTH = 160
 
+BATCH_SIZE = 64
+
 TRAIN_DATASET_PATH = 'data' + os.path.sep + 'train'
 TEST_DATASET_PATH = 'data' + os.path.sep + 'test'
 PREDICT_DATASET_PATH = 'data' + os.path.sep + 'predict'
@@ -23,6 +25,9 @@ MODEL_PATH = "models"
 SOLVER_FILE_NAME = "model.pkl"
 GENERATOR_FILE_NAME = "generator.pkl"
 DISCRIMINATOR_FILE_NAME = "discriminator.pkl"
+
 SOLVER_SAVE_PATH = path.join(MODEL_PATH, SOLVER_FILE_NAME)
+GENERATOR_FILE_PATH = path.join(MODEL_PATH, GENERATOR_FILE_NAME)
+DISCRIMINATOR_FILE_PATH = path.join(MODEL_PATH, DISCRIMINATOR_FILE_NAME)
 
 IMAGE_PATH = path.join(MODEL_PATH, "images")
