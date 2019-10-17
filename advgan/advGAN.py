@@ -136,17 +136,15 @@ class AdvGAN_Attack:
 
             self.optimizer_D.zero_grad()
             pred_real = self.netDisc(x)
-            real_output_tensor = (torch.ones_like(pred_real, device=self.device) * 0.3 ) + 0.7 if smooth else torch.zeros_like(pred_real, device=self.device)
+            real_output_tensor = (torch.rand_like(pred_real, device=self.device) * 0.3 ) + 0.7 if smooth else torch.ones_like(pred_real, device=self.device)
             
             loss_D_real = F.mse_loss(pred_real, real_output_tensor)
             loss_D_real.backward()
 
             pred_fake = self.netDisc(adv_images.detach())
-            fake_output_tensor = torch.ones_like(pred_fake, device=self.device) * 0.3 if smooth else torch.zeros_like(pred_fake, device=self.device)
+            fake_output_tensor = torch.rand_like(pred_fake, device=self.device) * 0.3 if smooth else torch.zeros_like(pred_fake, device=self.device)
             
-            loss_D_fake = \
-                F.mse_loss(pred_real, torch.ones_like(pred_real, device=self.device)*0.3) if smooth \
-                    else F.mse_loss(pred_fake, torch.zeros_like(pred_fake, device=self.device))
+            loss_D_fake = F.mse_loss(pred_real, fake_output_tensor)
             loss_D_fake.backward()
             loss_D_GAN = loss_D_fake + loss_D_real
             self.optimizer_D.step()
