@@ -16,7 +16,6 @@ import torch.optim as optim
 
 # from captcha.image import ImageCaptcha
 
-from solver.captcha_setting import TRAIN_DATASET_PATH
 
 BLANK_LABEL = 10
 BATCH_SIZE = 64
