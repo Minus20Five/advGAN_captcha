@@ -4,7 +4,7 @@ import torch
 import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
 
-from solver.another_cnn.lstm import StackedLSTM, CaptchaDataset, criterion, transform
+from solver.lstm import StackedLSTM, CaptchaDataset, criterion, transform
 from solver.captcha_setting import TEST_DATASET_PATH
 from utils.utils import training_device
 
