@@ -6,6 +6,7 @@ from PIL import Image
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from torch.utils.data.dataset import random_split
+from utils.utils import training_device
 
 import matplotlib.pyplot as plt
 
@@ -15,7 +16,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 # from captcha.image import ImageCaptcha
-
+from solver.captcha_setting import TRAIN_DATASET_PATH
 
 BLANK_LABEL = 10
 BATCH_SIZE = 64
@@ -26,7 +27,6 @@ IMAGE_WIDTH = 160
 #
 # for chars in range(0, 10000):
 #     image.write(f'{chars:>04}', f'{chars:>04}.png')
-from utils.utils import training_device
 
 
 class CaptchaDataset(Dataset):
