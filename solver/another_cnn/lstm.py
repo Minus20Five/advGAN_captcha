@@ -14,7 +14,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-from captcha.image import ImageCaptcha
+# from captcha.image import ImageCaptcha
 
 from solver.captcha_setting import TRAIN_DATASET_PATH
 
@@ -23,10 +23,10 @@ BATCH_SIZE = 64
 IMAGE_WIDTH = 160
 
 #
-image = ImageCaptcha()
+# image = ImageCaptcha()
 #
-for chars in range(0, 10000):
-    image.write(f'{chars:>04}', f'{chars:>04}.png')
+# for chars in range(0, 10000):
+#     image.write(f'{chars:>04}', f'{chars:>04}.png')
 from utils.utils import training_device
 
 
