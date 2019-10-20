@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
 
 from solver.another_cnn.lstm import StackedLSTM, CaptchaDataset, criterion, transform
+from solver.captcha_setting import TEST_DATASET_PATH
 from utils.utils import training_device
 
 BLANK_LABEL = 10
@@ -16,7 +17,7 @@ net.load_state_dict(torch.load('lstm.pkl', map_location=device))
 net.eval()
 h = net.init_hidden(BATCH_SIZE)  # init hidden state
 
-test_dataloader = DataLoader(CaptchaDataset(root_dir='data/captcha/test', transform=transform), batch_size=64, shuffle=True)
+test_dataloader = DataLoader(CaptchaDataset(root_dir=TEST_DATASET_PATH, transform=transform), batch_size=64, shuffle=True)
 
 test_loss = 0
 test_correct = 0
