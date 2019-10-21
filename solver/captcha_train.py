@@ -1,6 +1,8 @@
 # -*- coding: UTF-8 -*-
 import torch
 import torch.nn as nn
+import argparse
+
 from torch.autograd import Variable
 
 from solver import my_dataset, captcha_setting
@@ -11,7 +13,19 @@ num_epochs = 40
 batch_size = 100
 learning_rate = 0.001
 
-def main():
+parser = argparse.ArgumentParser(description='Train the CAPTCHA solver')
+
+parser.add_argument(
+    '--dir', '-d',
+    help='the folder the test and training data is in',
+    type=str,
+    # assumes running from project root and not in this file's directory (i.e python ./main.py)
+    default='data'
+)
+
+args = parser.parse_args()
+
+def main(args):
 
     print("CUDA Available: ", torch.cuda.is_available())
 
@@ -28,9 +42,8 @@ def main():
     optimizer = torch.optim.Adam(cnn.parameters(), lr=learning_rate)
 
 
-
     # Train the Model
-    train_dataloader = my_dataset.get_train_data_loader()
+    train_dataloader = my_dataset.get_train_data_loader(dir=captcha_setting.get_train_path(args.dirname))
     for epoch in range(num_epochs):
         for i, (images, labels) in enumerate(train_dataloader):
             images, labels = images.to(device), labels.to(device)
@@ -53,6 +66,6 @@ def main():
     print("save last model")
 
 if __name__ == '__main__':
-    main()
+    main(args)
 
 

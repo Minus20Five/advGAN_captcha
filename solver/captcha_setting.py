@@ -25,7 +25,6 @@ BATCH_SIZE = 64
 
 TRAIN_DATASET_PATH = get_train_path()
 TEST_DATASET_PATH = get_test_path()
-PREDICT_DATASET_PATH = 'data' + os.path.sep + 'predict'
 
 MODEL_PATH = "models"
 SOLVER_FILE_NAME = "model.pkl"

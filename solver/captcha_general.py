@@ -28,7 +28,10 @@ def decode_captcha_single(prediction):
     return '%s%s%s%s' % (c0, c1, c2, c3)
 
 
-def predict_n_batches(model, n=1, data_loader=get_test_data_loader(batch_size=64)):
+def predict_n_batches(model, n=1, data_loader=get_test_data_loader(batch_size=64), dir=None):
+    if dir is not None:
+        data_loader = get_test_data_loader(batch_size=64, dir=captcha_setting.get_test_path(dir))
+    
     model.eval()
     test_dataloader = data_loader
     correct = 0
