@@ -176,8 +176,9 @@ class AdvGAN_Attack:
                 pred = [c for c, _ in groupby(raw_pred)]
                 # if len(pred):
                 #     pred = [" " for _ in range(4)]
+                if len(pred) > 1:
+                    pred = pred[:1]
                 predictions.append(pred)
-            print(predictions)
             predictions = torch.Tensor(predictions).to(self.device)
             loss_adv = -F.multilabel_soft_margin_loss(predictions, labels.float())
             # probs_model = F.softmax(logits_model, dim=1)
