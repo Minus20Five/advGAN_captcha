@@ -6,8 +6,12 @@ from PIL import Image
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from torch.utils.data.dataset import random_split
-from utils.utils import training_device
 
+def training_device(device='cuda'):
+    return 'cuda' if device == 'cuda' and torch.cuda.is_available() else 'cpu'
+
+TRAIN_DATASET_PATH = 'data' + os.path.sep + 'train'
+TEST_DATASET_PATH = 'data' + os.path.sep + 'test'
 import matplotlib.pyplot as plt
 
 import torch
@@ -16,7 +20,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 # from captcha.image import ImageCaptcha
-from solver.captcha_setting import TRAIN_DATASET_PATH
+# from solver.captcha_setting import TRAIN_DATASET_PATH
 
 BLANK_LABEL = 10
 BATCH_SIZE = 64
