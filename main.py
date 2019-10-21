@@ -1,11 +1,21 @@
+from itertools import groupby
+from pathlib import Path
+
 import torch
 import argparse
 
 from os import path
+
+from PIL import Image
+from torch.utils.data import Dataset, DataLoader
+from torchvision.transforms import transforms
+
 from advgan.advGAN import AdvGAN_Attack
 from solver import captcha_setting
 from solver.captcha_cnn_model import CNN
+from solver.lstm.lstm import StackedLSTM, BLANK_LABEL
 from solver.my_dataset import get_train_data_loader
+from solver.one_hot_encoding import encode
 
 from utils.utils import training_device
 
@@ -49,6 +59,11 @@ parser.add_argument(
     help='apply label smoothing for training the AdvGan',
     action='store_true'
 )
+parser.add_argument(
+    '--dataset',
+    help='Path to the training dataset',
+    default=captcha_setting.TRAIN_DATASET_PATH
+)
 
 args = parser.parse_args()
 target_solver_path = args.target
@@ -58,29 +73,73 @@ bounds = args.bounds
 generator_path = path.join(captcha_setting.MODEL_PATH, args.generator_name)
 discriminator_path = path.join(captcha_setting.MODEL_PATH, args.discriminator_name)
 smooth = args.smooth
+train_path = args.dataset
 
 image_nc = 1  # 'nc' means number of channels ( i think)
 batch_size = 128
+
+
+# Fix this
+def lstm_decode(lstm_outputs):
+    out = []
+    for lstm_output in lstm_outputs:
+        prob, max_index = torch.max(lstm_output, dim=2)
+        raw_pred = list(max_index[:, 1].cpu().numpy())
+        out.append(''.join([str(c) for c, _ in groupby(raw_pred) if c != BLANK_LABEL]))
+
+    return out
+
+
+class CaptchaDataset(Dataset):
+    """CAPTCHA dataset."""
+
+    def __init__(self, root_dir, transform=None):
+        self.root_dir = root_dir
+        self.image_paths = list(Path(root_dir).glob('*'))
+        self.transform = transform
+
+    def __getitem__(self, index):
+        image = Image.open(self.image_paths[index])
+
+        if self.transform:
+            image = self.transform(image)
+
+        label_sequence = [int(c) for c in self.image_paths[index].stem]
+        return (image, torch.tensor(label_sequence))
+
+    def __len__(self):
+        return len(self.image_paths)
+
+transform = transforms.Compose([
+    transforms.Grayscale(),
+    transforms.ToTensor(),
+    transforms.Normalize((0.89165,), (0.14776,)),
+])
 
 def main():
     print('Label smoothing is {}'.format('ON' if smooth else 'OFF'))
     print('Training for {} epochs with clamp amount +/- {}...'.format(epochs, bounds))
     # pretrained_model = "./MNIST_target_model.pth"
     # targeted_model = MNIST_target_net().to(device)
-    targeted_model = CNN()
-    targeted_model.load_state_dict(torch.load(target_solver_path, map_location=training_device(device=device)))
-    targeted_model.eval()
+    # targeted_model = CNN()
+    # targeted_model.load_state_dict(torch.load(target_solver_path, map_location=training_device(device=device)))
+    # targeted_model.eval()
     # model_num_labels = 10
     model_num_labels = captcha_setting.ALL_CHAR_SET_LEN
+    targeted_model = StackedLSTM()
+    targeted_model.load_state_dict(torch.load(target_solver_path, map_location=training_device(device=device)))
+    targeted_model.eval()
 
     # MNIST train dataset and dataloader declaration
     # mnist_dataset = torchvision.datasets.MNIST('./dataset', train=True, transform=transforms.ToTensor(), download=True)
     # dataloader = DataLoader(mnist_dataset, batch_size=batch_size, shuffle=True, num_workers=1)
-    dataloader = get_train_data_loader()
+    # dataloader = get_train_data_loader()
+    dataloader = DataLoader(CaptchaDataset(root_dir=train_path, transform=transform), batch_size=64, shuffle=True)
     advGAN = AdvGAN_Attack(targeted_model,
                             device=device,
                             image_nc=image_nc,
-                            clamp=bounds)
+                            clamp=bounds,
+                           decoding_method=lstm_decode)
     advGAN.train(dataloader, epochs, smooth=smooth)
     advGAN.save_models(generator_filename=generator_path, discriminator_filename=discriminator_path)
 

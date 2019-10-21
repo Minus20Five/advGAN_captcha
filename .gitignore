@@ -10,3 +10,5 @@ models/
 *.pkl
 *.png
 *.PNG
+*.txt
+*.zip

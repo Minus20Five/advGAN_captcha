@@ -1,5 +1,4 @@
 import os
-from itertools import groupby
 from os import path
 
 import torch
@@ -14,6 +13,7 @@ from solver.my_dataset import get_test_data_loader
 from utils.utils import mkdir_p, training_device
 
 models_path = './models/'
+
 
 # custom weights initialization called on netG and netD
 def weights_init(m):
@@ -32,8 +32,7 @@ class AdvGAN_Attack:
                  box_min=0,
                  box_max=1,
                  device='cuda',
-                 clamp=0.05,
-                 decoding_method=decode_captcha_batch):
+                 clamp=0.05):
         self.device = training_device(device)
         print("Using: " + self.device)
 
@@ -49,7 +48,6 @@ class AdvGAN_Attack:
         # initialize all weights
         self.netG.apply(weights_init)
         self.netDisc.apply(weights_init)
-        self.decoding_method = decoding_method
 
         # initialize optimizers
         self.optimizer_G = torch.optim.Adam(self.netG.parameters(),
@@ -77,7 +75,7 @@ class AdvGAN_Attack:
                     discriminator_filename=captcha_setting.DISCRIMINATOR_FILE_PATH):
         torch.save(self.netG.state_dict(), generator_filename)
         print('Generator sucessfully saved at {}'.format(generator_filename))
-        torch.save(self.netDisc.state_dict(), discriminator_filename)        
+        torch.save(self.netDisc.state_dict(), discriminator_filename)
         print('Discriminator sucessfully saved at {}'.format(discriminator_filename))
 
     # using pretrained solver and advGAN generator, generate noise for one CATPCHA image,
@@ -98,11 +96,11 @@ class AdvGAN_Attack:
             test_images, test_labels = data
             num_attacked += test_images.shape[0]  # the first dimension of data is the batch_size
             perturbations = pretrained_G(test_images)
-            perturbations = torch.clamp(perturbations, 0.0-self.clamp, self.clamp)
+            perturbations = torch.clamp(perturbations, 0.0 - self.clamp, self.clamp)
             adv_images = perturbations + test_images
             adv_images = torch.clamp(adv_images, 0, 1)
 
-            predict_labels = self.decoding_method(self.model(adv_images))
+            predict_labels = decode_captcha_batch(self.model(adv_images))
             true_labels = [one_hot_encoding.decode(test_label) for test_label in test_labels.numpy()]
             for predict_label, true_label in zip(predict_labels, true_labels):
                 num_correct += 1 if predict_label == true_label else 0
@@ -134,19 +132,22 @@ class AdvGAN_Attack:
             perturbation = self.netG(x)
 
             # add a clipping trick
-            adv_images = torch.clamp(perturbation, 0.0-self.clamp, self.clamp) + x
+            adv_images = torch.clamp(perturbation, 0.0 - self.clamp, self.clamp) + x
             adv_images = torch.clamp(adv_images, self.box_min, self.box_max)
 
             self.optimizer_D.zero_grad()
             pred_real = self.netDisc(x)
-            real_output_tensor = (torch.rand_like(pred_real, device=self.device) * 0.3 ) + 0.7 if smooth else torch.ones_like(pred_real, device=self.device)
-            
+            real_output_tensor = (torch.rand_like(pred_real,
+                                                  device=self.device) * 0.3) + 0.7 if smooth else torch.ones_like(
+                pred_real, device=self.device)
+
             loss_D_real = F.mse_loss(pred_real, real_output_tensor)
-            loss_D_real.backward(retain_graph=True)
+            loss_D_real.backward()
 
             pred_fake = self.netDisc(adv_images.detach())
-            fake_output_tensor = torch.rand_like(pred_fake, device=self.device) * 0.3 if smooth else torch.zeros_like(pred_fake, device=self.device)
-            
+            fake_output_tensor = torch.rand_like(pred_fake, device=self.device) * 0.3 if smooth else torch.zeros_like(
+                pred_fake, device=self.device)
+
             loss_D_fake = F.mse_loss(pred_real, fake_output_tensor)
             loss_D_fake.backward()
             loss_D_GAN = loss_D_fake + loss_D_real
@@ -167,18 +168,8 @@ class AdvGAN_Attack:
             # loss_perturb = torch.max(loss_perturb - C, torch.zeros(1, device=self.device))
 
             # cal adv loss
-
-            outputs = self.model(adv_images)
-            predictions = []
-            prob, max_index = torch.max(outputs, dim=2)
-            for i in range(self.batch_size):
-                raw_pred = list(max_index[:, i].cpu().numpy())
-                pred = [c for c, _ in groupby(raw_pred)]
-                # if len(pred):
-                #     pred = [" " for _ in range(4)]
-                predictions.append(pred)
-            predictions = torch.Tensor(predictions)
-            loss_adv = -F.multilabel_soft_margin_loss(predictions, labels.float())
+            logits_model = self.model(adv_images)
+            loss_adv = -F.multilabel_soft_margin_loss(logits_model, labels.float())
             # probs_model = F.softmax(logits_model, dim=1)
             # onehot_labels = torch.eye(self.model_num_labels, device=self.device)[labels]
 

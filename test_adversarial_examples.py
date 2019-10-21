@@ -4,6 +4,7 @@ import argparse
 from advgan.advGAN import AdvGAN_Attack
 from solver import captcha_setting
 from solver.captcha_cnn_model import CNN
+from solver.lstm.lstm import StackedLSTM
 from utils.utils import training_device
 
 parser = argparse.ArgumentParser(description='Train the AdvGan against captchas with a solver')
@@ -41,9 +42,13 @@ batches = args.batches
 
 if __name__ == '__main__':
     print('Saving is: {}'.format('on' if save_images else 'off'))
-    solver = CNN()
-    solver.load_state_dict(torch.load(captcha_setting.SOLVER_SAVE_PATH, map_location=training_device()))
+    # solver = CNN()
+    # solver.load_state_dict(torch.load(captcha_setting.SOLVER_SAVE_PATH, map_location=training_device()))
+    # solver.eval()
+    solver = StackedLSTM()
+    solver.load_state_dict(torch.load('lstm_batch_5.pkl', map_location=device))
     solver.eval()
+    h = solver.init_hidden(64)  # in
     advGan = AdvGAN_Attack(model=solver, device='cpu')
     advGan.load_models(generator_filename=generator_path)
 

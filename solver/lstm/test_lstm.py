@@ -4,7 +4,7 @@ import torch
 import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
 
-from solver.another_cnn.lstm import StackedLSTM, CaptchaDataset, criterion, transform
+from solver.lstm.lstm import StackedLSTM, CaptchaDataset, criterion, transform
 from solver.captcha_setting import TEST_DATASET_PATH
 from utils.utils import training_device
 
@@ -13,7 +13,7 @@ BATCH_SIZE = 64
 device = training_device()
 
 net = StackedLSTM()
-net.load_state_dict(torch.load('lstm.pkl', map_location=device))
+net.load_state_dict(torch.load('lstm_batch_5.pkl', map_location=device))
 net.eval()
 h = net.init_hidden(BATCH_SIZE)  # init hidden state
 
@@ -42,7 +42,7 @@ with torch.no_grad():  # detach gradients so network runs faster
                   .contiguous()
                   .view((width, batch_size, -1)))
 
-        outputs, h = net(inputs, h)  # forward pass
+        outputs = net(inputs, h)  # forward pass
 
         # record loss
         input_lengths = torch.IntTensor(batch_size).fill_(width)
@@ -64,7 +64,6 @@ print(f'Test Loss: {(test_loss / len(test_dataloader)):.5f}, ' +
       f'Test Accuracy: {(test_correct / test_total):.5f} ' +
       f'({test_correct}/{test_total})')
 
-# See how it is
 data_iterator = iter(test_dataloader)
 inputs, targets = data_iterator.next()
 
@@ -78,7 +77,7 @@ plt.imshow(image)
 inputs = inputs.to(device)
 
 batch_size, channels, height, width = inputs.shape
-h = net.init_hidden(batch_size)
+# h = net.init_hidden(batch_size)
 
 inputs = (inputs
           .permute(3, 0, 2, 1)
@@ -86,7 +85,9 @@ inputs = (inputs
           .view((width, batch_size, -1)))
 
 # get prediction
-outputs, h = net(inputs, h)  # forward pass
+# outputs, h = net(inputs, h)  # forward pass
+outputs = net(inputs)  # forward pass
+
 prob, max_index = torch.max(outputs, dim=2)
 raw_pred = list(max_index[:, i].cpu().numpy())
 

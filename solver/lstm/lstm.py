@@ -6,6 +6,7 @@ from PIL import Image
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from torch.utils.data.dataset import random_split
+import os
 
 def training_device(device='cuda'):
     return 'cuda' if device == 'cuda' and torch.cuda.is_available() else 'cpu'
@@ -82,22 +83,34 @@ train_dataloader = DataLoader(CaptchaDataset(root_dir=TRAIN_DATASET_PATH, transf
 
 
 class StackedLSTM(nn.Module):
-    def __init__(self, input_size=60, output_size=11, hidden_size=512, num_layers=2):
+    def __init__(self, input_size=60, output_size=11, hidden_size=512, num_layers=2, batch_size=64):
         super(StackedLSTM, self).__init__()
         self.hidden_size = hidden_size
         self.num_layers = num_layers
+        self.batch_size = batch_size
 
         self.dropout = nn.Dropout()
         self.fc = nn.Linear(hidden_size, output_size)
         self.lstm = nn.LSTM(input_size, hidden_size, num_layers)
 
-    def forward(self, inputs, hidden):
+    def forward(self, inputs, hidden=None):
+        if hidden is None:
+            hidden = self.init_hidden(self.batch_size)
+
+        if len(inputs.shape) > 3:
+            # reshape inputs: NxCxHxW -> WxNx(HxC)
+            inputs = (inputs
+                      .permute(3, 0, 2, 1)
+                      .contiguous()
+                      .view((160, self.batch_size, -1)))
+
         # batch_size, seq_len, input_size = inputs.shape
         outputs, hidden = self.lstm(inputs, hidden)
         outputs = self.dropout(outputs)
         outputs = torch.stack([self.fc(outputs[i]) for i in range(IMAGE_WIDTH)])
         outputs = F.log_softmax(outputs, dim=2)
-        return outputs, hidden
+        # return outputs, hidden
+        return outputs
 
     def init_hidden(self, batch_size):
         weight = next(self.parameters()).data
@@ -109,7 +122,7 @@ device = training_device()
 net = StackedLSTM().to(device)
 
 criterion = nn.CTCLoss(blank=10)
-optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=0.9)
+optimizer = optim.SGD(net.parameters(), lr=0.01, momentum=0.9)
 
 
 def main():
@@ -136,7 +149,7 @@ def main():
                       .view((width, batch_size, -1)))
 
             optimizer.zero_grad()  # zero the parameter gradients
-            outputs, h = net(inputs, h)  # forward pass
+            outputs = net(inputs, h)  # forward pass
 
             # compare output with ground truth
             input_lengths = torch.IntTensor(batch_size).fill_(width)
