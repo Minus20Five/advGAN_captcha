@@ -82,11 +82,13 @@ batch_size = 128
 # Fix this
 def lstm_decode(lstm_outputs):
     out = []
-    for lstm_output in lstm_outputs:
-        prob, max_index = torch.max(lstm_output, dim=2)
-        raw_pred = list(max_index[:, 1].cpu().numpy())
-        out.append(''.join([str(c) for c, _ in groupby(raw_pred) if c != BLANK_LABEL]))
-
+    prob, max_index = torch.max(lstm_outputs, dim=2)
+    for i, _ in enumerate(lstm_outputs):
+        raw_pred = list(max_index[:, i].cpu().numpy())
+        pred = [c for c, _ in groupby(raw_pred)]
+        # if len(pred):
+        #     pred = [" " for _ in range(4)]
+        out.append(pred)
     return out
 
 
