@@ -169,4 +169,7 @@ def main():
     torch.save(net.state_dict(), "lstm.pkl")
 
 
+if __name__ == "__main__":
+    main()
+
 
