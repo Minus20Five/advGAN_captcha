@@ -9,7 +9,7 @@ from torchvision.utils import save_image
 
 from advgan import models
 from solver import captcha_setting, one_hot_encoding
-from solver.captcha_general import decode_captcha_batch
+# from solver.captcha_general import decode_captcha_batch
 from solver.my_dataset import get_test_data_loader
 from utils.utils import mkdir_p, training_device
 
@@ -33,7 +33,7 @@ class AdvGAN_Attack:
                  box_max=1,
                  device='cuda',
                  clamp=0.05,
-                 decoding_method=decode_captcha_batch):
+                 decoding_method=None): #should be decode_captcha_batch
         self.device = training_device(device)
         print("Using: " + self.device)
 
