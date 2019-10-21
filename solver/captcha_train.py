@@ -2,14 +2,14 @@
 import torch
 import torch.nn as nn
 import argparse
-
 from torch.autograd import Variable
 
-from solver import my_dataset, captcha_setting
-from solver.captcha_cnn_model import CNN
+import my_dataset, captcha_setting
+from captcha_cnn_model import CNN
+
 
 # Hyper Parameters
-num_epochs = 40
+num_epochs = 32
 batch_size = 100
 learning_rate = 0.001
 
@@ -23,10 +23,7 @@ parser.add_argument(
     default='data'
 )
 
-args = parser.parse_args()
-
 def main(args):
-
     print("CUDA Available: ", torch.cuda.is_available())
 
     if torch.cuda.is_available():
@@ -43,7 +40,7 @@ def main(args):
 
 
     # Train the Model
-    train_dataloader = my_dataset.get_train_data_loader(dir=captcha_setting.get_train_path(args.dirname))
+    train_dataloader = my_dataset.get_train_data_loader(dir=captcha_setting.get_train_path(args.dir))
     for epoch in range(num_epochs):
         for i, (images, labels) in enumerate(train_dataloader):
             images, labels = images.to(device), labels.to(device)
@@ -56,16 +53,16 @@ def main(args):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            if (i+1) % 10 == 0:
-                print("epoch:", epoch, "step:", i, "loss:", loss.item())
-        torch.save(cnn.state_dict(), captcha_setting.SOLVER_SAVE_PATH + ".epoch" + str(epoch))   #current is model.pkl
-        print("saved model")
+            # if (i+1) % 100 == 0:
+            #     print("epoch:", epoch, "step:", i, "loss:", loss.item())
+            # print("saved model")
         print("epoch:", epoch, "step:", i, "loss:", loss.item())
 
-    torch.save(cnn.state_dict(), captcha_setting.SOLVER_SAVE_PATH)   #current is model.pkl
+    torch.save(cnn.state_dict(), captcha_setting.get_model_save_name(args.dir))   #current is model.pkl
     print("save last model")
 
 if __name__ == '__main__':
+    args = parser.parse_args()
     main(args)
 
 

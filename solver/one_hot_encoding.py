@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 import numpy as np
 
-from solver import captcha_setting
+import captcha_setting
 
 
 def encode(text):

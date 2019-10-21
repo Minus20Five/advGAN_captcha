@@ -1,10 +1,9 @@
 import numpy as np
-
-from solver import captcha_setting, one_hot_encoding, my_dataset
+import captcha_setting, one_hot_encoding, my_dataset
 
 
 # Batch decode
-from solver.my_dataset import get_test_data_loader
+from my_dataset import get_test_data_loader
 
 
 def decode_captcha_batch(batch):
