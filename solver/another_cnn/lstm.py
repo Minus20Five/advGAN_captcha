@@ -112,7 +112,7 @@ def main():
     # Train
     net.train()
 
-    epochs = 1
+    epochs = 40
     for epoch in range(epochs):
         train_loss, train_correct, train_total = 0, 0, 0
 
@@ -164,6 +164,7 @@ def main():
                       f'Train Accuracy: {(train_correct / train_total):.5f}')
 
                 train_loss, train_correct, train_total = 0, 0, 0
+        torch.save(net.state_dict(), "lstm_batch_{}.pkl".format(epoch))
 
     torch.save(net.state_dict(), "lstm.pkl")
 
