@@ -4,6 +4,12 @@ import os
 # string.digits + string.ascii_uppercase
 from os import path
 
+def get_test_path(dirname='data'):
+    return dirname + os.path.sep + 'test'
+
+def get_train_path(dirname='data'):
+    return dirname + os.path.sep + 'train'
+
 NUMBER = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
 
@@ -17,8 +23,8 @@ IMAGE_WIDTH = 160
 
 BATCH_SIZE = 64
 
-TRAIN_DATASET_PATH = 'data' + os.path.sep + 'train'
-TEST_DATASET_PATH = 'data' + os.path.sep + 'test'
+TRAIN_DATASET_PATH = get_train_path()
+TEST_DATASET_PATH = get_test_path()
 PREDICT_DATASET_PATH = 'data' + os.path.sep + 'predict'
 
 MODEL_PATH = "models"
@@ -31,3 +37,5 @@ GENERATOR_FILE_PATH = path.join(MODEL_PATH, GENERATOR_FILE_NAME)
 DISCRIMINATOR_FILE_PATH = path.join(MODEL_PATH, DISCRIMINATOR_FILE_NAME)
 
 IMAGE_PATH = path.join(MODEL_PATH, "images")
+
+
