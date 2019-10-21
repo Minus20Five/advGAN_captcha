@@ -79,7 +79,7 @@ transform = transforms.Compose([
 
 # train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True)
 # test_dataloader = DataLoader(test_dataset, batch_size=64, shuffle=False)
-train_dataloader = DataLoader(CaptchaDataset(root_dir=TRAIN_DATASET_PATH, transform=transform), batch_size=64, shuffle=True)
+# train_dataloader = DataLoader(CaptchaDataset(root_dir=TRAIN_DATASET_PATH, transform=transform), batch_size=64, shuffle=True)
 
 
 class StackedLSTM(nn.Module):
@@ -118,75 +118,75 @@ class StackedLSTM(nn.Module):
                 weight.new(self.num_layers, batch_size, self.hidden_size).zero_())
 
 
-device = training_device()
-net = StackedLSTM().to(device)
-
-criterion = nn.CTCLoss(blank=10)
-optimizer = optim.SGD(net.parameters(), lr=0.01, momentum=0.9)
-
-
-def main():
-    # Train
-    net.train()
-
-    epochs = 40
-    for epoch in range(epochs):
-        train_loss, train_correct, train_total = 0, 0, 0
-
-        h = net.init_hidden(BATCH_SIZE)
-
-        # for each batch of training examples
-        for batch_index, (inputs, targets) in enumerate(train_dataloader):
-            inputs, targets = inputs.to(device), targets.to(device)
-            h = tuple([each.data for each in h])
-
-            batch_size, channels, height, width = inputs.shape
-
-            # reshape inputs: NxCxHxW -> WxNx(HxC)
-            inputs = (inputs
-                      .permute(3, 0, 2, 1)
-                      .contiguous()
-                      .view((width, batch_size, -1)))
-
-            optimizer.zero_grad()  # zero the parameter gradients
-            outputs = net(inputs, h)  # forward pass
-
-            # compare output with ground truth
-            input_lengths = torch.IntTensor(batch_size).fill_(width)
-            target_lengths = torch.IntTensor([len(t) for t in targets])
-            loss = criterion(outputs, targets, input_lengths, target_lengths)
-
-            loss.backward()  # backpropagation
-            nn.utils.clip_grad_norm_(net.parameters(), 10)  # clip gradients
-            optimizer.step()  # update network weights
-
-            # record statistics
-            prob, max_index = torch.max(outputs, dim=2)
-            train_loss += loss.item()
-            train_total += len(targets)
-
-            for i in range(batch_size):
-                raw_pred = list(max_index[:, i].cpu().numpy())
-                pred = [c for c, _ in groupby(raw_pred) if c != BLANK_LABEL]
-                target = list(targets[i].cpu().numpy())
-                # print('Pred: {} Target: {}'.format(pred, target))
-                if pred == target:
-                    train_correct += 1
-
-            # print statistics every 10 batches
-            if (batch_index + 1) % 10 == 0:
-                print(f'Epoch {epoch + 1}/{epochs}, ' +
-                      f'Batch {batch_index + 1}/{len(train_dataloader)}, ' +
-                      f'Train Loss: {(train_loss / 1):.5f}, ' +
-                      f'Train Accuracy: {(train_correct / train_total):.5f}')
-
-                train_loss, train_correct, train_total = 0, 0, 0
-        torch.save(net.state_dict(), "lstm_batch_{}.pkl".format(epoch))
-
-    torch.save(net.state_dict(), "lstm.pkl")
-
-
-if __name__ == "__main__":
-    main()
+# device = training_device()
+# net = StackedLSTM().to(device)
+#
+# criterion = nn.CTCLoss(blank=10)
+# optimizer = optim.SGD(net.parameters(), lr=0.01, momentum=0.9)
+#
+#
+# def main():
+#     # Train
+#     net.train()
+#
+#     epochs = 40
+#     for epoch in range(epochs):
+#         train_loss, train_correct, train_total = 0, 0, 0
+#
+#         h = net.init_hidden(BATCH_SIZE)
+#
+#         # for each batch of training examples
+#         for batch_index, (inputs, targets) in enumerate(train_dataloader):
+#             inputs, targets = inputs.to(device), targets.to(device)
+#             h = tuple([each.data for each in h])
+#
+#             batch_size, channels, height, width = inputs.shape
+#
+#             # reshape inputs: NxCxHxW -> WxNx(HxC)
+#             inputs = (inputs
+#                       .permute(3, 0, 2, 1)
+#                       .contiguous()
+#                       .view((width, batch_size, -1)))
+#
+#             optimizer.zero_grad()  # zero the parameter gradients
+#             outputs = net(inputs, h)  # forward pass
+#
+#             # compare output with ground truth
+#             input_lengths = torch.IntTensor(batch_size).fill_(width)
+#             target_lengths = torch.IntTensor([len(t) for t in targets])
+#             loss = criterion(outputs, targets, input_lengths, target_lengths)
+#
+#             loss.backward()  # backpropagation
+#             nn.utils.clip_grad_norm_(net.parameters(), 10)  # clip gradients
+#             optimizer.step()  # update network weights
+#
+#             # record statistics
+#             prob, max_index = torch.max(outputs, dim=2)
+#             train_loss += loss.item()
+#             train_total += len(targets)
+#
+#             for i in range(batch_size):
+#                 raw_pred = list(max_index[:, i].cpu().numpy())
+#                 pred = [c for c, _ in groupby(raw_pred) if c != BLANK_LABEL]
+#                 target = list(targets[i].cpu().numpy())
+#                 # print('Pred: {} Target: {}'.format(pred, target))
+#                 if pred == target:
+#                     train_correct += 1
+#
+#             # print statistics every 10 batches
+#             if (batch_index + 1) % 10 == 0:
+#                 print(f'Epoch {epoch + 1}/{epochs}, ' +
+#                       f'Batch {batch_index + 1}/{len(train_dataloader)}, ' +
+#                       f'Train Loss: {(train_loss / 1):.5f}, ' +
+#                       f'Train Accuracy: {(train_correct / train_total):.5f}')
+#
+#                 train_loss, train_correct, train_total = 0, 0, 0
+#         torch.save(net.state_dict(), "lstm_batch_{}.pkl".format(epoch))
+#
+#     torch.save(net.state_dict(), "lstm.pkl")
+#
+#
+# if __name__ == "__main__":
+#     main()
 
 
