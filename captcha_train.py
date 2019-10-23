@@ -12,6 +12,8 @@ num_epochs = 30
 batch_size = 100
 learning_rate = 0.001
 
+clamp = 0.05
+
 def main():
 
     print("CUDA Available: ", torch.cuda.is_available())
@@ -25,6 +27,7 @@ def main():
     cnn = CNN().to(device)
     generator = Generator(1, 1).to(device)
     generator.load_state_dict(torch.load('./models/generator-5epoch-pt05clamp.pkl', map_location=device))
+    generator.eval()
     cnn.train()
     print('init net')
     criterion = nn.MultiLabelSoftMarginLoss()
@@ -42,25 +45,31 @@ def main():
             predict_labels = cnn(images_var)
             # print(predict_labels.type)
             # print(labels.type)
-            loss = criterion(predict_labels, labels)
+            loss = criterion(predict_labels, labels) * 0.7
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
-            perturbed_images_var = Variable(generator(images) + images)
+
+            perturbations = generator(images)
+            perturbations = torch.clamp(perturbations, 0.0-clamp, clamp)
+            adv_images = perturbations + images
+            adv_images = torch.clamp(adv_images, 0, 1)
+            
+            perturbed_images_var = Variable(adv_images)
             predict_labels_perturbed = cnn(perturbed_images_var)
-            loss = criterion(predict_labels_perturbed, labels)
+            loss = criterion(predict_labels_perturbed, labels) * 0.3
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
             if (i+1) % 10 == 0:
                 print("epoch:", epoch, "step:", i, "loss:", loss.item())
-        torch.save(cnn.state_dict(), captcha_setting.MODEL_PATH + 'solver-adv-epoch' + str(epoch) + '.pkl')   #current is model.pkl
+        torch.save(cnn.state_dict(), captcha_setting.MODEL_PATH + '/solver-adv-epoch' + str(epoch) + '.pkl')   #current is model.pkl
         print("saved model")
         print("epoch:", epoch, "step:", i, "loss:", loss.item())
 
-    torch.save(cnn.state_dict(), captcha_setting.MODEL_PATH + 'solver-adv.pkl')   #current is solver-adv.pkl
+    torch.save(cnn.state_dict(), captcha_setting.MODEL_PATH + '/solver-adv.pkl')   #current is solver-adv.pkl
     print("save last model")
 
 if __name__ == '__main__':
