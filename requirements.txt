@@ -6,3 +6,4 @@ torch==1.2.0
 torchvision==0.4.0
 wheezy.captcha==0.1.44
 matplotlib==3.1.1
+pandas==0.25.0
