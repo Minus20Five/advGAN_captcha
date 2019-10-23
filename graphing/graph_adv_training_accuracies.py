@@ -14,11 +14,26 @@ df=pd.DataFrame(
     }
 )
  
-# multiple line plot
-plt.plot( 'epoch', 'unweighted-normal', data=df, marker='', color='skyblue', linewidth=2)
-plt.plot( 'epoch', 'unweighted-adv', data=df, marker='', color='skyblue', linewidth=2, linestyle='dashed')
-plt.plot( 'epoch', 'weighted-normal', data=df, marker='', color='olive', linewidth=2)
-plt.plot( 'epoch', 'weighted-adv', data=df, marker='', color='olive', linewidth=2, linestyle='dashed')
+plt.title('Unweighted Adversarially Trained Solver Accuracy Per Epoch')
+plt.plot( 'epoch', 'unweighted-normal', data=df, marker='', linewidth=2, label='Normal')
+plt.plot( 'epoch', 'unweighted-adv', data=df, marker='', linewidth=2, label='Adversarial')
+
+plt.xlabel('Epoch Number')
+plt.xticks(range(1,22))
+plt.ylabel('Accuracy (%%)')
+plt.legend()
+
+plt.show()
+
+plt.clf()
+
+plt.title('Weighted Adversarially Trained Solver Accuracy Per Epoch')
+plt.plot( 'epoch', 'weighted-normal', data=df, marker='', linewidth=2, label='Normal')
+plt.plot( 'epoch', 'weighted-adv', data=df, marker='', linewidth=2, label='Adversarial')
+
+plt.xlabel('Epoch Number')
+plt.xticks(range(1,22))
+plt.ylabel('Accuracy (%%)')
 plt.legend()
 
 plt.show()
