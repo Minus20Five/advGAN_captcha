@@ -79,7 +79,7 @@ class AdvGAN_Attack:
 
     # using pretrained solver and advGAN generator, generate noise for one CATPCHA image,
     # save the image, noise, and noise + image
-    def attack_n_batches(self, n=1, save_images=False):
+    def attack_n_batches(self, n=1, save_images=False, quiet=False):
         self.model.eval()
 
         pretrained_G = self.netG
@@ -119,7 +119,8 @@ class AdvGAN_Attack:
             if times_attacked >= n:
                 break
 
-            print("Total: {} Correct: {} Accuracy: {}".format(num_attacked, num_correct, num_correct / num_attacked))
+            if not quiet:
+                print("\tTotal: {} Correct: {} Accuracy: {}".format(num_attacked, num_correct, num_correct / num_attacked))
 
         return num_attacked, num_correct
 
