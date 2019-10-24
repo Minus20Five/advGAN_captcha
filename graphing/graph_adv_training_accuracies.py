@@ -136,12 +136,14 @@ df=pd.DataFrame(
     }
 )
  
+labels = np.arange(1, 29, 2.0)
+
 plt.title('Normally Trained Solver Accuracy Per Epoch')
 plt.plot( 'epoch', 'standard-normal', data=df, marker='', linewidth=2, label='Normal')
 plt.plot( 'epoch', 'standard-adv', data=df, marker='', linewidth=2, label='Adversarial')
 
 plt.xlabel('Epoch Number')
-plt.xticks(range(1,29))
+plt.xticks(labels)
 plt.ylabel('Accuracy (%)')
 plt.ylim(0,100)
 plt.legend()
@@ -155,7 +157,7 @@ plt.plot( 'epoch', 'advtrain-normal', data=df, marker='', linewidth=2, label='No
 plt.plot( 'epoch', 'advtrain-adv', data=df, marker='', linewidth=2, label='Adversarial')
 
 plt.xlabel('Epoch Number')
-plt.xticks(range(1,29))
+plt.xticks(labels)
 plt.ylabel('Accuracy (%)')
 plt.ylim(0,100)
 plt.legend()
